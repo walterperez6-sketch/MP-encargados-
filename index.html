@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="es">
-<head>
+<head><link rel="icon" type="image/jpeg" href="repsol.jpg">
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>MP JUNIO 2026 — Dashboard</title>
@@ -82,6 +82,21 @@ select{
   background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 24 24' fill='none' stroke='%235a6f8f' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
   background-repeat:no-repeat;background-position:right 9px center;transition:border-color .15s}
 select:hover,select:focus{border-color:var(--c1)}
+  input[type="text"]{
+  background:var(--s2);
+  border:1px solid var(--brd2);
+  color:var(--tx);
+  border-radius:8px;
+  padding:7px 11px;
+  font-family:var(--fm);
+  font-size:11px;
+  min-width:180px;
+  outline:none;
+}
+
+input[type="text"]:focus{
+  border-color:var(--c1);
+}
 .btn-reset{background:transparent;border:1px solid var(--c2);color:var(--c2);
   font-family:var(--fm);font-size:11px;border-radius:8px;padding:7px 14px;cursor:pointer;
   transition:background .15s;white-space:nowrap}
@@ -185,6 +200,10 @@ select:hover,select:focus{border-color:var(--c1)}
     <select id="fLista"><option value="">Todos</option></select></div>
   <div class="fg"><label>Semana inicio</label>
     <select id="fSemana"><option value="">Todas</option></select></div>
+  <div class="fg">
+  <label>Buscar Orden</label>
+  <input type="text" id="fOrden" placeholder="Ej: 40012345">
+</div>
   <button class="btn-reset" id="btnReset">✕ Resetear filtros</button>
 </div>
 
@@ -259,11 +278,14 @@ zone.addEventListener('drop', e => { e.preventDefault(); zone.style.borderColor 
 document.getElementById('fileInput').addEventListener('change', e => { if(e.target.files[0]) load(e.target.files[0]); });
 
 // ── Filter wiring ────────────────────────────────────────────────────────────
-['fPob','fCalle','fClasePM','fLista','fSemana'].forEach(id =>
-  document.getElementById(id).addEventListener('change', () => render(filtered()))
+['fPob','fCalle','fClasePM','fLista','fSemana','fOrden'].forEach(id =>
+  document.getElementById(id).addEventListener('input', () => render(filtered()))
 );
+
 document.getElementById('btnReset').addEventListener('click', () => {
-  ['fPob','fCalle','fClasePM','fLista','fSemana'].forEach(id => document.getElementById(id).value = '');
+  ['fPob','fCalle','fClasePM','fLista','fSemana','fOrden'].forEach(id =>
+    document.getElementById(id).value = ''
+  );
   render(filtered());
 });
 
@@ -273,12 +295,18 @@ function filtered() {
   const cpm   = document.getElementById('fClasePM').value;
   const lst   = document.getElementById('fLista').value;
   const sem   = document.getElementById('fSemana').value;
+  const orden = document.getElementById('fOrden').value.trim();
+
   return allData.filter(r => {
-    if (pob && r._pob   !== pob) return false;
+    if (pob && r._pob !== pob) return false;
     if (cal && r._calle !== cal) return false;
     if (cpm && r._clasePM !== cpm) return false;
     if (lst && r._lista !== lst) return false;
     if (sem && r._semana !== sem) return false;
+
+    if (orden && !String(r._orden || '').includes(orden))
+      return false;
+
     return true;
   });
 }
