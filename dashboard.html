@@ -1,0 +1,585 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>MP JUNIO 2026 — Dashboard</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:ital,wght@0,400;0,500;1,400&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet" />
+<style>
+:root{
+  --bg:#080d18;--s1:#0e1525;--s2:#141f33;--s3:#1a2640;
+  --brd:#1e2d48;--brd2:#253550;
+  --c1:#00e5ff;--c2:#f97316;--c3:#a78bfa;--c4:#34d399;--c5:#fbbf24;--c6:#f472b6;--c7:#60a5fa;--c8:#e879f9;
+  --tx:#dde4f0;--mu:#5a6f8f;--mu2:#8094b4;
+  --fh:'Syne',sans-serif;--fm:'DM Mono',monospace;
+  --r:12px;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--tx);font-family:var(--fm);min-height:100vh;overflow-x:hidden}
+
+/* Grid bg */
+body::before{content:'';position:fixed;inset:0;
+  background-image:linear-gradient(rgba(0,229,255,.025) 1px,transparent 1px),linear-gradient(90deg,rgba(0,229,255,.025) 1px,transparent 1px);
+  background-size:44px 44px;pointer-events:none;z-index:0}
+
+/* Radial glow top */
+body::after{content:'';position:fixed;top:-200px;left:50%;transform:translateX(-50%);
+  width:900px;height:500px;border-radius:50%;
+  background:radial-gradient(ellipse,rgba(0,229,255,.06) 0%,transparent 70%);
+  pointer-events:none;z-index:0}
+
+.wrap{position:relative;z-index:1;padding:20px 24px 60px;max-width:1700px;margin:0 auto}
+
+/* ── HEADER ── */
+header{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;
+  padding-bottom:18px;margin-bottom:20px;border-bottom:1px solid var(--brd)}
+.logo{display:flex;align-items:center;gap:10px}
+.logo-mark{width:38px;height:38px;border-radius:10px;
+  background:linear-gradient(135deg,var(--c1) 0%,var(--c3) 100%);
+  display:grid;place-items:center;font-size:17px;flex-shrink:0;
+  box-shadow:0 0 20px rgba(0,229,255,.3)}
+.logo-name{font-family:var(--fh);font-size:20px;font-weight:800;letter-spacing:-.5px}
+.logo-name span{color:var(--c1)}
+.logo-sub{font-size:10px;color:var(--mu);letter-spacing:1px;text-transform:uppercase;margin-top:2px}
+.hd-badges{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.badge{font-size:10px;padding:4px 10px;border-radius:20px;border:1px solid var(--brd);color:var(--mu2);letter-spacing:.5px;white-space:nowrap}
+.badge.live{border-color:var(--c4);color:var(--c4)}
+
+/* ── UPLOAD ZONE ── */
+.upload-zone{
+  background:var(--s1);border:1.5px dashed var(--c1);border-radius:var(--r);
+  padding:14px 20px;display:flex;align-items:center;gap:14px;flex-wrap:wrap;
+  margin-bottom:20px;cursor:pointer;transition:background .2s,border-color .2s;
+  position:relative;overflow:hidden}
+.upload-zone:hover{background:#0b1520;border-color:var(--c3)}
+.upload-zone::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;
+  background:linear-gradient(90deg,var(--c1),var(--c3),var(--c1));
+  background-size:200%;animation:shimmer 3s linear infinite}
+@keyframes shimmer{0%{background-position:0%}100%{background-position:200%}}
+.upload-zone input[type=file]{display:none}
+.up-btn{
+  background:linear-gradient(135deg,var(--c1),#007a90);color:#000;
+  font-family:var(--fh);font-weight:700;border:none;border-radius:8px;
+  padding:9px 18px;cursor:pointer;font-size:12px;letter-spacing:.3px;white-space:nowrap;
+  transition:opacity .15s,transform .1s;flex-shrink:0}
+.up-btn:hover{opacity:.85;transform:scale(.98)}
+.up-msg{flex:1;font-size:12px;color:var(--mu2)}
+.up-msg.ok{color:var(--c4)}
+.up-msg.err{color:var(--c2)}
+.up-hint{font-size:10px;color:var(--mu);border:1px solid var(--brd);border-radius:6px;padding:3px 10px;white-space:nowrap}
+
+/* ── FILTERS ── */
+#filtersBar{display:none;gap:10px;flex-wrap:wrap;align-items:flex-end;margin-bottom:20px}
+.fg{display:flex;flex-direction:column;gap:3px}
+.fg label{font-size:10px;color:var(--mu);letter-spacing:1px;text-transform:uppercase}
+select{
+  background:var(--s2);border:1px solid var(--brd2);color:var(--tx);
+  border-radius:8px;padding:7px 28px 7px 11px;font-family:var(--fm);font-size:11px;
+  cursor:pointer;outline:none;min-width:140px;appearance:none;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 24 24' fill='none' stroke='%235a6f8f' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+  background-repeat:no-repeat;background-position:right 9px center;transition:border-color .15s}
+select:hover,select:focus{border-color:var(--c1)}
+.btn-reset{background:transparent;border:1px solid var(--c2);color:var(--c2);
+  font-family:var(--fm);font-size:11px;border-radius:8px;padding:7px 14px;cursor:pointer;
+  transition:background .15s;white-space:nowrap}
+.btn-reset:hover{background:rgba(249,115,22,.1)}
+
+/* ── KPI GRID ── */
+.kpi-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:14px;margin-bottom:20px}
+.kpi{background:var(--s1);border:1px solid var(--brd);border-radius:var(--r);
+  padding:18px 20px;position:relative;overflow:hidden;transition:transform .2s,border-color .2s}
+.kpi:hover{transform:translateY(-2px);border-color:var(--brd2)}
+.kpi::after{content:'';position:absolute;top:0;left:0;right:0;height:2px}
+.kpi.k1::after{background:linear-gradient(90deg,var(--c1),var(--c3))}
+.kpi.k2::after{background:linear-gradient(90deg,var(--c2),var(--c5))}
+.kpi.k3::after{background:linear-gradient(90deg,var(--c4),#059669)}
+.kpi.k4::after{background:linear-gradient(90deg,var(--c3),var(--c8))}
+.kpi.k5::after{background:linear-gradient(90deg,var(--c5),var(--c2))}
+.kpi-ico{font-size:22px;margin-bottom:8px}
+.kpi-lbl{font-size:9px;color:var(--mu);letter-spacing:1.2px;text-transform:uppercase;margin-bottom:4px}
+.kpi-val{font-family:var(--fh);font-size:28px;font-weight:800;letter-spacing:-1px;line-height:1}
+.kpi.k1 .kpi-val{color:var(--c1)}
+.kpi.k2 .kpi-val{color:var(--c2)}
+.kpi.k3 .kpi-val{color:var(--c4)}
+.kpi.k4 .kpi-val{color:var(--c3)}
+.kpi.k5 .kpi-val{color:var(--c5)}
+.kpi-sub{font-size:10px;color:var(--mu2);margin-top:5px}
+.kpi-glow{position:absolute;right:-20px;bottom:-20px;width:90px;height:90px;border-radius:50%;opacity:.08;filter:blur(18px)}
+.kpi.k1 .kpi-glow{background:var(--c1)} .kpi.k2 .kpi-glow{background:var(--c2)}
+.kpi.k3 .kpi-glow{background:var(--c4)} .kpi.k4 .kpi-glow{background:var(--c3)}
+.kpi.k5 .kpi-glow{background:var(--c5)}
+
+/* ── CHARTS GRID ── */
+.cgrid{display:grid;grid-template-columns:repeat(12,1fr);gap:14px}
+.cc{background:var(--s1);border:1px solid var(--brd);border-radius:var(--r);padding:18px 20px;transition:border-color .2s}
+.cc:hover{border-color:var(--brd2)}
+.cc.s8{grid-column:span 8} .cc.s4{grid-column:span 4}
+.cc.s6{grid-column:span 6} .cc.s12{grid-column:span 12}
+.cc.s5{grid-column:span 5} .cc.s7{grid-column:span 7}
+.ch{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;gap:8px;flex-wrap:wrap}
+.ct{font-family:var(--fh);font-size:13px;font-weight:700;letter-spacing:-.2px}
+.cb{font-size:9px;padding:2px 8px;border-radius:20px;border:1px solid var(--brd);color:var(--mu);letter-spacing:.5px}
+.cw{position:relative;width:100%}
+
+/* empty */
+#emptyState{grid-column:span 12;display:flex;flex-direction:column;align-items:center;
+  justify-content:center;gap:12px;padding:60px 20px;
+  border:1px dashed var(--brd);border-radius:var(--r);color:var(--mu);text-align:center}
+#emptyState .ei{font-size:40px;opacity:.4}
+#emptyState p{font-size:12px;max-width:300px;line-height:1.7}
+
+/* scrollbar */
+::-webkit-scrollbar{width:5px} ::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--brd);border-radius:10px}
+
+/* responsive */
+@media(max-width:1000px){
+  .cc.s8,.cc.s7,.cc.s5{grid-column:span 12}
+  .cc.s4,.cc.s6{grid-column:span 12}
+  .kpi-val{font-size:22px}
+}
+@media(max-width:600px){.cc.s8,.cc.s4,.cc.s6,.cc.s12,.cc.s5,.cc.s7{grid-column:span 12}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<!-- HEADER -->
+<header>
+  <div class="logo">
+    <div class="logo-mark">⚙️</div>
+    <div>
+      <div class="logo-name">Manto<span>Pulse</span></div>
+      <div class="logo-sub">Plan de Mantenimiento · Junio 2026</div>
+    </div>
+  </div>
+  <div class="hd-badges">
+    <div class="badge" id="bdgRows">— registros</div>
+    <div class="badge" id="bdgSheet">Sin hoja</div>
+    <div class="badge live" id="bdgTime">—</div>
+  </div>
+</header>
+
+<!-- UPLOAD -->
+<label class="upload-zone" for="fileInput" id="upZone">
+  <input type="file" id="fileInput" accept=".xlsx,.xls,.csv" />
+  <button class="up-btn" onclick="document.getElementById('fileInput').click();event.preventDefault()">
+    📂 Cargar / Recargar Excel
+  </button>
+  <div class="up-msg" id="upMsg">Arrastra tu archivo .xlsx · .xls · .csv aquí, o haz clic para seleccionar</div>
+  <div class="up-hint">Offline · Sin servidor · Recarga infinita</div>
+</label>
+
+<!-- FILTERS -->
+<div id="filtersBar">
+  <div class="fg"><label>Responsable</label>
+    <select id="fPob"><option value="">Todos</option></select></div>
+  <div class="fg"><label>Tipo calle</label>
+    <select id="fCalle"><option value="">Todos</option></select></div>
+  <div class="fg"><label>Clase PM</label>
+    <select id="fClasePM"><option value="">Todas</option></select></div>
+  <div class="fg"><label>Lista / Equipo</label>
+    <select id="fLista"><option value="">Todos</option></select></div>
+  <div class="fg"><label>Semana inicio</label>
+    <select id="fSemana"><option value="">Todas</option></select></div>
+  <button class="btn-reset" id="btnReset">✕ Resetear filtros</button>
+</div>
+
+<!-- KPIs -->
+<div class="kpi-row">
+  <div class="kpi k1"><div class="kpi-glow"></div>
+    <div class="kpi-ico">📋</div>
+    <div class="kpi-lbl">Total Órdenes</div>
+    <div class="kpi-val" id="kTot">—</div>
+    <div class="kpi-sub" id="kTotSub">Carga un archivo</div>
+  </div>
+  <div class="kpi k2"><div class="kpi-glow"></div>
+    <div class="kpi-ico">👷</div>
+    <div class="kpi-lbl">Responsables</div>
+    <div class="kpi-val" id="kResp">—</div>
+    <div class="kpi-sub" id="kRespSub">—</div>
+  </div>
+  <div class="kpi k3"><div class="kpi-glow"></div>
+    <div class="kpi-ico">⚡</div>
+    <div class="kpi-lbl">AGEFRED ELE</div>
+    <div class="kpi-val" id="kEle">—</div>
+    <div class="kpi-sub" id="kEleSub">—</div>
+  </div>
+  <div class="kpi k4"><div class="kpi-glow"></div>
+    <div class="kpi-ico">❄️</div>
+    <div class="kpi-lbl">AGEFRED HVAC</div>
+    <div class="kpi-val" id="kHvac">—</div>
+    <div class="kpi-sub" id="kHvacSub">—</div>
+  </div>
+  <div class="kpi k5"><div class="kpi-glow"></div>
+    <div class="kpi-ico">🔁</div>
+    <div class="kpi-lbl">OLC</div>
+    <div class="kpi-val" id="kOlc">—</div>
+    <div class="kpi-sub" id="kOlcSub">—</div>
+  </div>
+</div>
+
+<!-- CHARTS -->
+<div class="cgrid" id="cgrid">
+  <div id="emptyState">
+    <div class="ei">📂</div>
+    <p>Carga tu archivo <strong>MP JUNIO 2026.xlsx</strong> para visualizar el dashboard de mantenimiento.</p>
+  </div>
+</div>
+
+</div><!-- /wrap -->
+
+<script>
+// ── Global chart defaults ───────────────────────────────────────────────────
+Chart.defaults.color = '#5a6f8f';
+Chart.defaults.font.family = "'DM Mono', monospace";
+Chart.defaults.font.size = 11;
+Chart.defaults.plugins.legend.labels.boxWidth = 10;
+Chart.defaults.plugins.legend.labels.padding = 12;
+
+const PAL = ['#00e5ff','#f97316','#a78bfa','#34d399','#fbbf24','#f472b6','#60a5fa','#e879f9','#a3e635','#fb923c'];
+const TTP = {
+  backgroundColor:'#0e1525',borderColor:'#1e2d48',borderWidth:1,
+  titleColor:'#dde4f0',bodyColor:'#8094b4',padding:10,cornerRadius:8,
+  displayColors:true
+};
+
+// ── State ────────────────────────────────────────────────────────────────────
+let allData = [];
+let charts  = {};
+
+// ── Drag & drop ──────────────────────────────────────────────────────────────
+const zone = document.getElementById('upZone');
+zone.addEventListener('dragover',  e => { e.preventDefault(); zone.style.borderColor = '#a78bfa'; });
+zone.addEventListener('dragleave', () => { zone.style.borderColor = ''; });
+zone.addEventListener('drop', e => { e.preventDefault(); zone.style.borderColor = ''; const f = e.dataTransfer.files[0]; if(f) load(f); });
+document.getElementById('fileInput').addEventListener('change', e => { if(e.target.files[0]) load(e.target.files[0]); });
+
+// ── Filter wiring ────────────────────────────────────────────────────────────
+['fPob','fCalle','fClasePM','fLista','fSemana'].forEach(id =>
+  document.getElementById(id).addEventListener('change', () => render(filtered()))
+);
+document.getElementById('btnReset').addEventListener('click', () => {
+  ['fPob','fCalle','fClasePM','fLista','fSemana'].forEach(id => document.getElementById(id).value = '');
+  render(filtered());
+});
+
+function filtered() {
+  const pob   = document.getElementById('fPob').value;
+  const cal   = document.getElementById('fCalle').value;
+  const cpm   = document.getElementById('fClasePM').value;
+  const lst   = document.getElementById('fLista').value;
+  const sem   = document.getElementById('fSemana').value;
+  return allData.filter(r => {
+    if (pob && r._pob   !== pob) return false;
+    if (cal && r._calle !== cal) return false;
+    if (cpm && r._clasePM !== cpm) return false;
+    if (lst && r._lista !== lst) return false;
+    if (sem && r._semana !== sem) return false;
+    return true;
+  });
+}
+
+function fillSel(id, vals, fmt) {
+  const s = document.getElementById(id);
+  const f = s.options[0]; s.innerHTML = ''; s.appendChild(f);
+  vals.forEach(v => { const o = document.createElement('option'); o.value = v; o.textContent = fmt ? fmt(v) : v; s.appendChild(o); });
+}
+
+function buildFilters(data) {
+  const uniq = k => [...new Set(data.map(r => r[k]).filter(Boolean))].sort();
+  fillSel('fPob',     uniq('_pob'));
+  fillSel('fCalle',   uniq('_calle'));
+  fillSel('fClasePM', uniq('_clasePM'));
+  fillSel('fLista',   uniq('_lista'));
+  fillSel('fSemana',  uniq('_semana'), v => `Semana ${v}`);
+}
+
+// ── Load file ────────────────────────────────────────────────────────────────
+function load(file) {
+  const msg = document.getElementById('upMsg');
+  msg.textContent = `⏳ Leyendo ${file.name}…`; msg.className = 'up-msg';
+  const r = new FileReader();
+  r.onload = e => {
+    try {
+      const isCsv = file.name.toLowerCase().endsWith('.csv');
+      const wb = isCsv
+        ? XLSX.read(e.target.result, { type: 'binary', cellDates: true })
+        : XLSX.read(new Uint8Array(e.target.result), { type: 'array', cellDates: true });
+
+      const sheetName = wb.SheetNames[0];
+      const raw = XLSX.utils.sheet_to_json(wb.Sheets[sheetName], { defval: null, raw: false });
+
+      // Normalize & enrich each row
+      allData = raw.map(row => {
+        const n = {};
+        Object.keys(row).forEach(k => { n[k.trim()] = row[k]; });
+        // Canonical keys (case-insensitive matching)
+        const col = (candidates) => {
+          for (const c of candidates) {
+            const found = Object.keys(n).find(k => k.toLowerCase().includes(c.toLowerCase()));
+            if (found) return n[found];
+          }
+          return null;
+        };
+        n._pob     = col(['Población','Poblacion','poblacion']);
+        n._calle   = col(['Calle']);
+        n._orden   = col(['Orden']);
+        n._clasePM = col(['Clase actividad PM','ClaseActividadPM','clase actividad']);
+        n._status  = col(['Status de usuario','Status usuario']);
+        n._lista   = col(['Lista']);
+        n._distrito= col(['Distrito']);
+        n._claseOrden = col(['Clase de orden']);
+        n._ubicacion  = col(['Denominación de la ubicación','ubicación técnica']);
+        // Date → week
+        const fechaIni = col(['Fecha de inicio extrema','inicio extrema']);
+        if (fechaIni) {
+          const d = new Date(fechaIni);
+          if (!isNaN(d)) {
+            const jan1 = new Date(d.getFullYear(),0,1);
+            n._semana = String(Math.ceil(((d-jan1)/86400000 + jan1.getDay()+1)/7));
+            n._dia = d.toISOString().slice(0,10);
+          }
+        }
+        return n;
+      });
+
+      document.getElementById('bdgRows').textContent  = `${allData.length} registros`;
+      document.getElementById('bdgSheet').textContent = sheetName;
+      document.getElementById('bdgTime').textContent  = `Act. ${new Date().toLocaleTimeString('es-MX')}`;
+      msg.textContent = `✅ ${file.name} — ${allData.length} órdenes cargadas`; msg.className = 'up-msg ok';
+
+      document.getElementById('filtersBar').style.display = 'flex';
+      buildFilters(allData);
+      render(allData);
+    } catch(err) {
+      msg.textContent = `❌ Error: ${err.message}`; msg.className = 'up-msg err';
+    }
+  };
+  if (file.name.toLowerCase().endsWith('.csv')) r.readAsBinaryString(file);
+  else r.readAsArrayBuffer(file);
+}
+
+// ── Destroy chart ─────────────────────────────────────────────────────────────
+function dc(id) { if(charts[id]){ charts[id].destroy(); delete charts[id]; } }
+
+// ── Build chart shell ────────────────────────────────────────────────────────
+function buildShell() {
+  document.getElementById('cgrid').innerHTML = `
+    <!-- Row 1 -->
+    <div class="cc s8" id="cPobOrden">
+      <div class="ch"><span class="ct">Órdenes por Responsable</span><span class="cb">BARRAS</span></div>
+      <div class="cw" style="height:270px"><canvas id="chartPobOrden"></canvas></div>
+    </div>
+    <div class="cc s4" id="cCalle">
+      <div class="ch"><span class="ct">Distribución Tipo Calle</span><span class="cb">DONA</span></div>
+      <div class="cw" style="height:270px"><canvas id="chartCalle"></canvas></div>
+    </div>
+    <!-- Row 2 -->
+    <div class="cc s5" id="cClasePM">
+      <div class="ch"><span class="ct">Clase Actividad PM</span><span class="cb">DONA</span></div>
+      <div class="cw" style="height:250px"><canvas id="chartClasePM"></canvas></div>
+    </div>
+    <div class="cc s7" id="cCalleResp">
+      <div class="ch"><span class="ct">Tipo de Calle por Responsable</span><span class="cb">BARRAS APILADAS</span></div>
+      <div class="cw" style="height:250px"><canvas id="chartCalleResp"></canvas></div>
+    </div>
+    <!-- Row 3 -->
+    <div class="cc s12" id="cTimeline">
+      <div class="ch"><span class="ct">Órdenes por Fecha de Inicio</span><span class="cb">LÍNEA TEMPORAL</span></div>
+      <div class="cw" style="height:220px"><canvas id="chartTimeline"></canvas></div>
+    </div>
+    <!-- Row 4 -->
+    <div class="cc s6" id="cSemana">
+      <div class="ch"><span class="ct">Órdenes por Semana</span><span class="cb">BARRAS</span></div>
+      <div class="cw" style="height:230px"><canvas id="chartSemana"></canvas></div>
+    </div>
+    <div class="cc s6" id="cLista">
+      <div class="ch"><span class="ct">Top Equipos / Lista</span><span class="cb">BARRAS H</span></div>
+      <div class="cw" style="height:230px"><canvas id="chartLista"></canvas></div>
+    </div>
+  `;
+}
+
+// ── Helpers ──────────────────────────────────────────────────────────────────
+function groupCount(data, key) {
+  const m = {};
+  data.forEach(r => { const k = r[key] || 'N/A'; m[k] = (m[k]||0)+1; });
+  return m;
+}
+function sortedObj(obj, limit=20) {
+  return Object.entries(obj).sort((a,b)=>b[1]-a[1]).slice(0,limit)
+    .reduce((acc,[k,v])=>{ acc.k.push(k); acc.v.push(v); return acc; }, {k:[],v:[]});
+}
+
+// ── RENDER ───────────────────────────────────────────────────────────────────
+function render(data) {
+  buildShell();
+
+  // ── KPIs ──
+  document.getElementById('kTot').textContent    = data.length;
+  document.getElementById('kTotSub').textContent = `${allData.length} total en archivo`;
+  const resps = new Set(data.map(r=>r._pob).filter(Boolean));
+  document.getElementById('kResp').textContent    = resps.size;
+  document.getElementById('kRespSub').textContent = [...resps].join(' · ').substring(0,40) || '—';
+  const eleN  = data.filter(r=>r._calle==='AGEFRED ELE').length;
+  const hvacN = data.filter(r=>r._calle==='AGEFRED HVAC').length;
+  const olcN  = data.filter(r=>r._calle==='OLC').length;
+  document.getElementById('kEle').textContent     = eleN;
+  document.getElementById('kEleSub').textContent  = `${((eleN/data.length)||0*100).toFixed(1)}% del total`;
+  document.getElementById('kHvac').textContent    = hvacN;
+  document.getElementById('kHvacSub').textContent = `${((hvacN/data.length)||0*100).toFixed(1)}% del total`;
+  document.getElementById('kOlc').textContent     = olcN;
+  document.getElementById('kOlcSub').textContent  = `${((olcN/data.length)||0*100).toFixed(1)}% del total`;
+
+  // ── 1. Barras: Responsable vs Órdenes ──
+  dc('chartPobOrden');
+  const pob = groupCount(data,'_pob');
+  const pobS = sortedObj(pob);
+  charts['chartPobOrden'] = new Chart(document.getElementById('chartPobOrden'),{
+    type:'bar',
+    data:{labels:pobS.k,datasets:[{
+      label:'Órdenes',data:pobS.v,
+      backgroundColor:PAL.map(c=>c+'bb'),borderColor:PAL,borderWidth:1.5,borderRadius:6
+    }]},
+    options:{responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{display:false},tooltip:{...TTP}},
+      scales:{
+        x:{ticks:{color:'#5a6f8f',maxRotation:25},grid:{color:'#1a2640'}},
+        y:{ticks:{color:'#5a6f8f'},grid:{color:'#1a2640'},beginAtZero:true}
+      }}
+  });
+
+  // ── 2. Dona: Tipo Calle ──
+  dc('chartCalle');
+  const calle = groupCount(data,'_calle');
+  const calleK = Object.keys(calle), calleV = Object.values(calle);
+  charts['chartCalle'] = new Chart(document.getElementById('chartCalle'),{
+    type:'doughnut',
+    data:{labels:calleK,datasets:[{data:calleV,
+      backgroundColor:PAL.map(c=>c+'cc'),borderColor:'#0e1525',borderWidth:2,hoverOffset:8
+    }]},
+    options:{responsive:true,maintainAspectRatio:false,cutout:'60%',
+      plugins:{
+        legend:{position:'bottom',labels:{color:'#8094b4',padding:10}},
+        tooltip:{...TTP,callbacks:{label:ctx=>{
+          const tot=ctx.dataset.data.reduce((a,b)=>a+b,0);
+          return ` ${ctx.label}: ${ctx.parsed} (${((ctx.parsed/tot)*100).toFixed(1)}%)`;
+        }}}
+      }}
+  });
+
+  // ── 3. Dona: Clase PM ──
+  dc('chartClasePM');
+  const cpm = groupCount(data,'_clasePM');
+  const cpmK = Object.keys(cpm), cpmV = Object.values(cpm);
+  charts['chartClasePM'] = new Chart(document.getElementById('chartClasePM'),{
+    type:'doughnut',
+    data:{labels:cpmK,datasets:[{data:cpmV,
+      backgroundColor:[PAL[2]+'cc',PAL[4]+'cc'],borderColor:'#0e1525',borderWidth:2,hoverOffset:8
+    }]},
+    options:{responsive:true,maintainAspectRatio:false,cutout:'60%',
+      plugins:{
+        legend:{position:'bottom',labels:{color:'#8094b4',padding:10}},
+        tooltip:{...TTP,callbacks:{label:ctx=>{
+          const tot=ctx.dataset.data.reduce((a,b)=>a+b,0);
+          return ` ${ctx.label}: ${ctx.parsed} (${((ctx.parsed/tot)*100).toFixed(1)}%)`;
+        }}}
+      }}
+  });
+
+  // ── 4. Barras apiladas: Calle × Responsable ──
+  dc('chartCalleResp');
+  const callesUniq = [...new Set(data.map(r=>r._calle).filter(Boolean))];
+  const pobsUniq   = [...new Set(data.map(r=>r._pob).filter(Boolean))].sort();
+  const stackDS = callesUniq.map((cal,i)=>({
+    label: cal,
+    data: pobsUniq.map(p => data.filter(r=>r._pob===p && r._calle===cal).length),
+    backgroundColor: PAL[i%PAL.length]+'cc',
+    borderColor: PAL[i%PAL.length],
+    borderWidth:1,borderRadius:3
+  }));
+  charts['chartCalleResp'] = new Chart(document.getElementById('chartCalleResp'),{
+    type:'bar',
+    data:{labels:pobsUniq,datasets:stackDS},
+    options:{responsive:true,maintainAspectRatio:false,
+      plugins:{
+        legend:{position:'top',labels:{color:'#8094b4'}},
+        tooltip:{...TTP,mode:'index',intersect:false}
+      },
+      scales:{
+        x:{stacked:true,ticks:{color:'#5a6f8f',maxRotation:20},grid:{color:'#1a2640'}},
+        y:{stacked:true,ticks:{color:'#5a6f8f'},grid:{color:'#1a2640'},beginAtZero:true}
+      }}
+  });
+
+  // ── 5. Línea: Órdenes por Fecha ──
+  dc('chartTimeline');
+  const diasMap = {};
+  data.forEach(r=>{ if(r._dia) diasMap[r._dia]=(diasMap[r._dia]||0)+1; });
+  const diasKeys = Object.keys(diasMap).sort();
+  const diasVals = diasKeys.map(k=>diasMap[k]);
+  charts['chartTimeline'] = new Chart(document.getElementById('chartTimeline'),{
+    type:'line',
+    data:{labels:diasKeys,datasets:[{
+      label:'Órdenes',data:diasVals,
+      borderColor:PAL[0],backgroundColor:PAL[0]+'18',
+      pointBackgroundColor:PAL[0],tension:.35,fill:true,pointRadius:4
+    }]},
+    options:{responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{display:false},tooltip:{...TTP}},
+      scales:{
+        x:{ticks:{color:'#5a6f8f',maxRotation:30},grid:{color:'#1a2640'}},
+        y:{ticks:{color:'#5a6f8f'},grid:{color:'#1a2640'},beginAtZero:true}
+      }}
+  });
+
+  // ── 6. Barras: Órdenes por Semana ──
+  dc('chartSemana');
+  const semMap = groupCount(data,'_semana');
+  const semKeys = Object.keys(semMap).sort((a,b)=>+a-+b);
+  charts['chartSemana'] = new Chart(document.getElementById('chartSemana'),{
+    type:'bar',
+    data:{labels:semKeys.map(k=>`Sem ${k}`),datasets:[{
+      label:'Órdenes',
+      data:semKeys.map(k=>semMap[k]),
+      backgroundColor:PAL[3]+'bb',borderColor:PAL[3],borderWidth:1.5,borderRadius:6
+    }]},
+    options:{responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{display:false},tooltip:{...TTP}},
+      scales:{
+        x:{ticks:{color:'#5a6f8f'},grid:{color:'#1a2640'}},
+        y:{ticks:{color:'#5a6f8f'},grid:{color:'#1a2640'},beginAtZero:true}
+      }}
+  });
+
+  // ── 7. Barras H: Top Listas / Equipos ──
+  dc('chartLista');
+  const listaMap = groupCount(data,'_lista');
+  // remove empty/null
+  delete listaMap['N/A']; delete listaMap[''];
+  const listaS = sortedObj(listaMap, 12);
+  charts['chartLista'] = new Chart(document.getElementById('chartLista'),{
+    type:'bar',
+    data:{labels:listaS.k,datasets:[{
+      label:'Órdenes',data:listaS.v,
+      backgroundColor:PAL.map((_,i)=>PAL[i%PAL.length]+'bb'),
+      borderColor:PAL.map((_,i)=>PAL[i%PAL.length]),borderWidth:1.5,borderRadius:4
+    }]},
+    options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{display:false},tooltip:{...TTP}},
+      scales:{
+        x:{ticks:{color:'#5a6f8f'},grid:{color:'#1a2640'},beginAtZero:true},
+        y:{ticks:{color:'#8094b4',font:{size:10}},grid:{color:'transparent'}}
+      }}
+  });
+}
+
+// ── Auto-load sample on start ────────────────────────────────────────────────
+// (Shows empty state until user loads real file — no fake demo data)
+</script>
+</body>
+</html>
