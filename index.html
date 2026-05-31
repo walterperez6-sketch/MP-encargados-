@@ -354,13 +354,14 @@ function filtered() {
     if (orden && !String(r._orden || '').includes(orden)) return false;
 
     // ── FILTRO POR FECHA ──
-    if (r._dia) {
-      if (fDesde && r._dia < fDesde) return false;
-      if (fHasta && r._dia > fHasta) return false;
-    }
+    if (fDesde) {
+  const desde = new Date(fDesde).getTime();
+  if (r._time < desde) return false;
+}
 
-    return true;
-  });
+if (fHasta) {
+  const hasta = new Date(fHasta).getTime();
+  if (r._time > hasta + 86399999) return false; // incluye todo el día
 }
 
 
