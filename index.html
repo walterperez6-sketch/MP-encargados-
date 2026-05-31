@@ -473,20 +473,84 @@ document.getElementById('btnResetBacklog').addEventListener('click',()=>{
 // ── Date helper → "YYYY-MM-DD" ─────────────────────────────────────────────
 function toYMD(val){
   if(!val||val==='null') return null;
-  let fechaLimpia = null;
-  
   if(val instanceof Date){
-    if(!isNaN(val)) {
-      fechaLimpia = `${val.getFullYear()}-${String(val.getMonth()+1).padStart(2,'0')}-${String(val.getDate()).padStart(2,'0')}`;
-    }
-  } else if(typeof val==='string'&&val.match(/^\d{4}-\d{2}-\d{2}/)) {
-    fechaLimpia = val.slice(0,10);
-  } else if(typeof val==='string'&&val.includes('/')){
-    const [d,m,y]=val.split('/');
-    if(y&&m&&d) fechaLimpia = `${y}-${m.padStart(2,'0')}-${d.padStart(2,'0')}`;
+    if(isNaN(val)) return null;
+    return `${val.getFullYear()}-${String(val.getMonth()+1).padStart(2,'0')}-${String(val.getDate()).padStart(2,'0')}`;
   }
+  if(typeof val==='string'&&val.match(/^\d{4}-\d{2}-\d{2}/)) return val.slice(0,10);
+  if(typeof val==='string'&&val.includes('/')){
+    const [d,m,y]=val.split('/');
+    if(y&&m&&d) return `${y}-${m.padStart(2,'0')}-${d.padStart(2,'0')}`;
+  }
+  return null;
+}
 
-  return fechaLimpia;
+// ── CONFIGURACIÓN DE FILTROS PRINCIPALES ──────────────────────────────────
+// Escuchar cambios en selectores de texto
+['filtro-responsable','filtro-calle','filtro-clase-pm','filtro-clase-orden','filtro-semana'].forEach(id=>{
+  const el = document.getElementById(id);
+  if(el) el.addEventListener('change',()=>filtrarYRenderizar());
+});
+
+// ESCUCHAR CAMBIOS EN LOS CALENDARIOS (¡NUEVO!)
+['inicio-extrema-desde', 'inicio-extrema-hasta'].forEach(id => {
+  const el = document.getElementById(id);
+  if(el) el.addEventListener('change', () => filtrarYRenderizar());
+});
+
+// BOTÓN RESETEAR PRINCIPAL (X ROJA)
+const btnReset = document.getElementById('btn-reset');
+if(btnReset){
+  btnReset.addEventListener('click',()=>{
+    ['filtro-responsable','filtro-calle','filtro-clase-pm','filtro-clase-orden','filtro-semana'].forEach(id=>{
+      const el = document.getElementById(id);
+      if(el) el.value='';
+    });
+    // Limpiar calendarios también al resetear
+    const fD = document.getElementById('inicio-extrema-desde'); if(fD) fD.value='';
+    const fH = document.getElementById('inicio-extrema-hasta'); if(fH) fH.value='';
+    
+    filtrarYRenderizar();
+  });
+}
+
+// ── MOTOR DE FILTRADO PRINCIPAL ────────────────────────────────────────────
+function filteredData(){
+  if(!allData || allData.length===0) return [];
+  
+  const vRep = document.getElementById('filtro-responsable').value.trim().toLowerCase();
+  const vCal = document.getElementById('filtro-calle').value.trim().toLowerCase();
+  const vCpm = document.getElementById('filtro-clase-pm').value.trim().toLowerCase();
+  const vCord = document.getElementById('filtro-clase-orden').value.trim().toLowerCase();
+  const vSem = document.getElementById('filtro-semana').value.trim().toLowerCase();
+  const vTxt = document.getElementById('txtBuscarOrden') ? document.getElementById('txtBuscarOrden').value.trim().toLowerCase() : '';
+
+  const fDesde = document.getElementById('inicio-extrema-desde').value; // YYYY-MM-DD
+  const fHasta = document.getElementById('inicio-extrema-hasta').value; // YYYY-MM-DD
+
+  return allData.filter(row => {
+    let importa = true;
+
+    // 1) Filtros de Texto y Selects
+    if(vRep && (!row.responsable || !row.responsable.toLowerCase().includes(vRep))) importa = false;
+    if(vCal && (!row.tipo_calle || !row.tipo_calle.toLowerCase().includes(vCal))) importa = false;
+    if(vCpm && (!row.clase_pm || !row.clase_pm.toLowerCase().includes(vCpm))) importa = false;
+    if(vCord && (!row.clase_orden || !row.clase_orden.toLowerCase().includes(vCord))) importa = false;
+    if(vSem && (!row.semana || !row.semana.toLowerCase().includes(vSem))) importa = false;
+    if(vTxt && (!row.orden || !row.orden.toString().toLowerCase().includes(vTxt))) importa = false;
+
+    // 2) FILTRO DE FECHAS REPARADO (Comparación segura como texto)
+    const fechaOrdenLimpia = toYMD(row.inicio_extrema_desde);
+
+    if (fDesde && fechaOrdenLimpia && fechaOrdenLimpia < fDesde) {
+      importa = false;
+    }
+    if (fHasta && fechaOrdenLimpia && fechaOrdenLimpia > fHasta) {
+      importa = false;
+    }
+
+    return importa;
+  });
 }
 
 // ── DETECTOR AUTOMÁTICO PARA TUS CALENDARIOS ────────────────────────────────
