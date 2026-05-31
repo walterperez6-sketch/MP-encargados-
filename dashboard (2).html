@@ -1,0 +1,937 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<link rel="icon" type="image/jpeg" href="repsol.jpg">
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>MP JUNIO 2026 — Repsol La Pampilla</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:ital,wght@0,400;0,500;1,400&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet"/>
+<style>
+:root{
+  --bg:#080d18;--s1:#0e1525;--s2:#141f33;--s3:#1a2640;
+  --brd:#1e2d48;--brd2:#253550;
+  --c1:#ff6600;--c2:#e30613;--c3:#ffcc00;--c4:#00b050;--c5:#0066cc;
+  --c6:#ff8c42;--c7:#ffb000;--c8:#cc0000;
+  --tx:#dde4f0;--mu:#5a6f8f;--mu2:#8094b4;
+  --fh:'Syne',sans-serif;--fm:'DM Mono',monospace;
+  --r:12px;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--tx);font-family:var(--fm);min-height:100vh;overflow-x:hidden}
+body::before{content:'';position:fixed;inset:0;
+  background-image:linear-gradient(rgba(255,102,0,.02) 1px,transparent 1px),linear-gradient(90deg,rgba(255,102,0,.02) 1px,transparent 1px);
+  background-size:44px 44px;pointer-events:none;z-index:0}
+body::after{content:'';position:fixed;top:-200px;left:50%;transform:translateX(-50%);
+  width:900px;height:500px;border-radius:50%;
+  background:radial-gradient(ellipse,rgba(255,102,0,.05) 0%,transparent 70%);
+  pointer-events:none;z-index:0}
+.wrap{position:relative;z-index:1;padding:20px 24px 60px;max-width:1700px;margin:0 auto}
+.watermark{position:fixed;bottom:18px;right:20px;font-family:var(--fh);font-size:11px;
+  letter-spacing:1px;color:rgba(255,255,255,.1);pointer-events:none;user-select:none;z-index:0}
+
+/* HEADER */
+header{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;
+  padding-bottom:18px;margin-bottom:20px;border-bottom:1px solid var(--brd)}
+.logo{display:flex;align-items:center;gap:12px}
+.logo-mark{width:42px;height:42px;border-radius:10px;overflow:hidden;
+  background:linear-gradient(135deg,var(--c1),var(--c3));
+  display:flex;align-items:center;justify-content:center;flex-shrink:0;
+  box-shadow:0 0 18px rgba(255,102,0,.3);font-size:20px}
+.logo-mark img{width:100%;height:100%;object-fit:contain;padding:6px}
+.logo-name{font-family:var(--fh);font-size:20px;font-weight:800;letter-spacing:-.5px}
+.logo-name span{color:var(--c1)}
+.logo-sub{font-size:10px;color:var(--mu);letter-spacing:1px;text-transform:uppercase;margin-top:2px}
+.hd-badges{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.badge{font-size:10px;padding:4px 10px;border-radius:20px;border:1px solid var(--brd);color:var(--mu2);letter-spacing:.5px;white-space:nowrap}
+.badge.live{border-color:var(--c4);color:var(--c4)}
+.badge.warn{border-color:var(--c3);color:var(--c3)}
+
+/* TABS */
+.tabs{display:flex;gap:6px;margin-bottom:20px;flex-wrap:wrap}
+.tab{font-family:var(--fh);font-size:12px;font-weight:700;padding:9px 20px;border-radius:8px;
+  border:1px solid var(--brd);background:var(--s1);color:var(--mu2);cursor:pointer;
+  transition:all .2s;letter-spacing:.3px}
+.tab:hover{border-color:var(--c1);color:var(--tx)}
+.tab.active{background:linear-gradient(135deg,var(--c1),#b84800);border-color:var(--c1);color:#fff;
+  box-shadow:0 0 14px rgba(255,102,0,.3)}
+
+/* UPLOAD */
+.upload-zone{background:var(--s1);border:1.5px dashed var(--c1);border-radius:var(--r);
+  padding:14px 20px;display:flex;align-items:center;gap:14px;flex-wrap:wrap;
+  margin-bottom:20px;cursor:pointer;transition:background .2s,border-color .2s;
+  position:relative;overflow:hidden}
+.upload-zone:hover{background:#0d1b2a;border-color:var(--c3)}
+.upload-zone::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;
+  background:linear-gradient(90deg,var(--c1),var(--c3),var(--c1));
+  background-size:200%;animation:shimmer 3s linear infinite}
+@keyframes shimmer{0%{background-position:0%}100%{background-position:200%}}
+.upload-zone input[type=file]{display:none}
+.up-btn{background:linear-gradient(135deg,var(--c1),#b84800);color:#fff;
+  font-family:var(--fh);font-weight:700;border:none;border-radius:8px;
+  padding:9px 18px;cursor:pointer;font-size:12px;letter-spacing:.3px;white-space:nowrap;
+  transition:opacity .15s,transform .1s;flex-shrink:0}
+.up-btn:hover{opacity:.85;transform:scale(.98)}
+.up-msg{flex:1;font-size:12px;color:var(--mu2)}
+.up-msg.ok{color:var(--c4)}.up-msg.err{color:var(--c2)}
+.up-hint{font-size:10px;color:var(--mu);border:1px solid var(--brd);border-radius:6px;padding:3px 10px;white-space:nowrap}
+
+/* FILTERS */
+.filters-box{display:none;gap:10px;flex-wrap:wrap;align-items:flex-end;margin-bottom:20px;
+  background:var(--s1);border:1px solid var(--brd);border-radius:var(--r);padding:16px 18px}
+.filters-title{width:100%;font-size:10px;color:var(--mu);letter-spacing:1.2px;text-transform:uppercase;
+  margin-bottom:4px;font-family:var(--fh)}
+.fg{display:flex;flex-direction:column;gap:4px}
+.fg label{font-size:10px;color:var(--mu);letter-spacing:.8px;text-transform:uppercase}
+select,input[type="text"],input[type="date"]{
+  background:var(--s2);border:1px solid var(--brd2);color:var(--tx);
+  border-radius:8px;padding:7px 11px;font-family:var(--fm);font-size:11px;
+  cursor:pointer;outline:none;min-width:130px;transition:border-color .15s}
+select{padding-right:28px;appearance:none;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 24 24' fill='none' stroke='%235a6f8f' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+  background-repeat:no-repeat;background-position:right 9px center}
+select:hover,select:focus,input:hover,input:focus{border-color:var(--c1)}
+input[type="date"]::-webkit-calendar-picker-indicator{filter:invert(.4)}
+.filter-sep{width:1px;height:36px;background:var(--brd);align-self:flex-end;margin:0 4px}
+.btn-reset{background:transparent;border:1px solid var(--c2);color:var(--c2);
+  font-family:var(--fm);font-size:11px;border-radius:8px;padding:7px 14px;cursor:pointer;
+  transition:background .15s;white-space:nowrap;align-self:flex-end}
+.btn-reset:hover{background:rgba(227,6,19,.12)}
+.filter-count{align-self:flex-end;font-size:11px;color:var(--mu2);white-space:nowrap;padding-bottom:7px}
+
+/* KPI */
+.kpi-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:14px;margin-bottom:20px}
+.kpi{background:var(--s1);border:1px solid var(--brd);border-radius:var(--r);
+  padding:18px 20px;position:relative;overflow:hidden;transition:transform .2s,border-color .2s}
+.kpi:hover{transform:translateY(-2px);border-color:var(--brd2)}
+.kpi::after{content:'';position:absolute;top:0;left:0;right:0;height:2px}
+.kpi.k1::after{background:linear-gradient(90deg,var(--c1),var(--c3))}
+.kpi.k2::after{background:linear-gradient(90deg,var(--c2),var(--c5))}
+.kpi.k3::after{background:linear-gradient(90deg,var(--c4),#059669)}
+.kpi.k4::after{background:linear-gradient(90deg,var(--c3),var(--c8))}
+.kpi.k5::after{background:linear-gradient(90deg,var(--c5),var(--c2))}
+.kpi.k6::after{background:linear-gradient(90deg,#e879f9,var(--c5))}
+.kpi-ico{font-size:22px;margin-bottom:8px}
+.kpi-lbl{font-size:9px;color:var(--mu);letter-spacing:1.2px;text-transform:uppercase;margin-bottom:4px}
+.kpi-val{font-family:var(--fh);font-size:28px;font-weight:800;letter-spacing:-1px;line-height:1}
+.kpi.k1 .kpi-val{color:var(--c1)}.kpi.k2 .kpi-val{color:var(--c2)}
+.kpi.k3 .kpi-val{color:var(--c4)}.kpi.k4 .kpi-val{color:var(--c3)}
+.kpi.k5 .kpi-val{color:var(--c5)}.kpi.k6 .kpi-val{color:#e879f9}
+.kpi-sub{font-size:10px;color:var(--mu2);margin-top:5px}
+.kpi-glow{position:absolute;right:-20px;bottom:-20px;width:90px;height:90px;border-radius:50%;opacity:.08;filter:blur(18px)}
+.kpi.k1 .kpi-glow{background:var(--c1)}.kpi.k2 .kpi-glow{background:var(--c2)}
+.kpi.k3 .kpi-glow{background:var(--c4)}.kpi.k4 .kpi-glow{background:var(--c3)}
+.kpi.k5 .kpi-glow{background:var(--c5)}.kpi.k6 .kpi-glow{background:#e879f9}
+
+/* BACKLOG GAUGE */
+.gauge-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px;margin-bottom:20px}
+.gauge-card{background:var(--s1);border:1px solid var(--brd);border-radius:var(--r);
+  padding:18px 20px;text-align:center;transition:transform .2s,border-color .2s}
+.gauge-card:hover{transform:translateY(-2px);border-color:var(--brd2)}
+.gauge-label{font-size:10px;color:var(--mu);letter-spacing:1px;text-transform:uppercase;margin-bottom:10px;font-family:var(--fh)}
+.gauge-wrap{position:relative;height:110px;display:flex;align-items:center;justify-content:center}
+.gauge-wrap canvas{position:absolute}
+.gauge-center{position:relative;z-index:1;text-align:center}
+.gauge-val{font-family:var(--fh);font-size:22px;font-weight:800;line-height:1}
+.gauge-unit{font-size:10px;color:var(--mu2);margin-top:2px}
+.gauge-sub{font-size:10px;color:var(--mu2);margin-top:8px}
+
+/* CHARTS */
+.cgrid{display:grid;grid-template-columns:repeat(12,1fr);gap:14px}
+.cc{background:var(--s1);border:1px solid var(--brd);border-radius:var(--r);padding:18px 20px;transition:border-color .2s}
+.cc:hover{border-color:var(--brd2)}
+.cc.s8{grid-column:span 8}.cc.s4{grid-column:span 4}
+.cc.s6{grid-column:span 6}.cc.s12{grid-column:span 12}
+.cc.s5{grid-column:span 5}.cc.s7{grid-column:span 7}
+.cc.s3{grid-column:span 3}
+.ch{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;gap:8px;flex-wrap:wrap}
+.ct{font-family:var(--fh);font-size:13px;font-weight:700;letter-spacing:-.2px}
+.cb{font-size:9px;padding:2px 8px;border-radius:20px;border:1px solid var(--brd);color:var(--mu);letter-spacing:.5px}
+.cw{position:relative;width:100%}
+
+/* BACKLOG TABLE */
+.bl-table{width:100%;border-collapse:collapse;font-size:11px}
+.bl-table th{background:var(--s2);color:var(--mu);font-size:9px;letter-spacing:1px;
+  text-transform:uppercase;padding:8px 12px;text-align:left;border-bottom:1px solid var(--brd)}
+.bl-table td{padding:8px 12px;border-bottom:1px solid var(--brd);color:var(--tx)}
+.bl-table tr:hover td{background:var(--s2)}
+.bl-bar{height:6px;border-radius:3px;background:var(--c1);display:inline-block;min-width:4px}
+.bl-dias{font-family:var(--fh);font-weight:700}
+.bl-dias.alto{color:var(--c2)}
+.bl-dias.medio{color:var(--c3)}
+.bl-dias.bajo{color:var(--c4)}
+
+#emptyState{grid-column:span 12;display:flex;flex-direction:column;align-items:center;
+  justify-content:center;gap:12px;padding:60px 20px;
+  border:1px dashed var(--brd);border-radius:var(--r);color:var(--mu);text-align:center}
+#emptyState .ei{font-size:40px;opacity:.4}
+#emptyState p{font-size:12px;max-width:340px;line-height:1.7}
+
+/* PANEL SECTIONS */
+.panel{display:none}
+.panel.active{display:block}
+
+::-webkit-scrollbar{width:5px}::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--brd);border-radius:10px}
+
+@media(max-width:1100px){
+  .cc.s8,.cc.s7,.cc.s5,.cc.s4,.cc.s6{grid-column:span 12}
+  .kpi-val{font-size:22px}
+}
+@media(max-width:600px){
+  .cc.s8,.cc.s4,.cc.s6,.cc.s12,.cc.s5,.cc.s7,.cc.s3{grid-column:span 12}
+}
+</style>
+</head>
+<body>
+<div class="watermark">Developed by Walter Pérez Dávila</div>
+<div class="wrap">
+
+<!-- HEADER -->
+<header>
+  <div class="logo">
+    <div class="logo-mark">
+      <img src="repsol.jpg" alt="R" onerror="this.parentElement.textContent='⛽'">
+    </div>
+    <div>
+      <div class="logo-name">REPSOL<span>LAPAMPILLA</span></div>
+      <div class="logo-sub">Dashboard de Mantenimiento · 2026</div>
+    </div>
+  </div>
+  <div class="hd-badges">
+    <div class="badge" id="bdgRows">— registros</div>
+    <div class="badge" id="bdgSheet">Sin datos</div>
+    <div class="badge live" id="bdgTime">—</div>
+    <div class="badge warn" id="bdgBacklog" style="display:none">— días backlog</div>
+  </div>
+</header>
+
+<!-- UPLOAD -->
+<label class="upload-zone" for="fileInput" id="upZone">
+  <input type="file" id="fileInput" accept=".xlsx,.xls,.csv"/>
+  <button class="up-btn" onclick="document.getElementById('fileInput').click();event.preventDefault()">
+    📂 Cargar / Recargar Excel
+  </button>
+  <div class="up-msg" id="upMsg">Arrastra tu archivo .xlsx · .xls · .csv — compatible con IW38 y MP JUNIO</div>
+  <div class="up-hint">Offline · Sin servidor · Recarga infinita</div>
+</label>
+
+<!-- TABS -->
+<div class="tabs">
+  <button class="tab active" onclick="switchTab('plan')">📋 Plan de Mantenimiento</button>
+  <button class="tab" onclick="switchTab('backlog')">⏳ Backlog</button>
+</div>
+
+<!-- ════════════════════════════════════════════════ -->
+<!--  PANEL: PLAN DE MANTENIMIENTO                   -->
+<!-- ════════════════════════════════════════════════ -->
+<div class="panel active" id="panelPlan">
+
+  <!-- Filters Plan -->
+  <div class="filters-box" id="filtersPlan">
+    <div class="filters-title">🔽 Filtros</div>
+    <div class="fg"><label>Responsable</label>
+      <select id="fPob"><option value="">Todos</option></select></div>
+    <div class="fg"><label>Tipo Calle</label>
+      <select id="fCalle"><option value="">Todos</option></select></div>
+    <div class="fg"><label>Clase PM</label>
+      <select id="fClasePM"><option value="">Todas</option></select></div>
+    <div class="fg"><label>Clase Orden</label>
+      <select id="fClaseOrden"><option value="">Todas</option></select></div>
+    <div class="fg"><label>Semana</label>
+      <select id="fSemana"><option value="">Todas</option></select></div>
+    <div class="filter-sep"></div>
+    <div class="fg"><label>Buscar Orden</label>
+      <input type="text" id="fOrden" placeholder="Ej: 5829547" style="min-width:120px"></div>
+    <div class="filter-sep"></div>
+    <div class="fg"><label>Inicio Extrema — Desde</label>
+      <input type="date" id="fInicioDesde"></div>
+    <div class="fg"><label>Inicio Extrema — Hasta</label>
+      <input type="date" id="fInicioHasta"></div>
+    <div class="filter-sep"></div>
+    <div class="fg"><label>Fin Extrema — Desde</label>
+      <input type="date" id="fFinDesde"></div>
+    <div class="fg"><label>Fin Extrema — Hasta</label>
+      <input type="date" id="fFinHasta"></div>
+    <div class="filter-count" id="filterCount"></div>
+    <button class="btn-reset" id="btnResetPlan">✕ Resetear</button>
+  </div>
+
+  <!-- KPIs Plan -->
+  <div class="kpi-row" id="kpiRowPlan">
+    <div class="kpi k1"><div class="kpi-glow"></div>
+      <div class="kpi-ico">📋</div><div class="kpi-lbl">Total Órdenes</div>
+      <div class="kpi-val" id="kTot">—</div><div class="kpi-sub" id="kTotSub">Carga un archivo</div></div>
+    <div class="kpi k2"><div class="kpi-glow"></div>
+      <div class="kpi-ico">👷</div><div class="kpi-lbl">Responsables</div>
+      <div class="kpi-val" id="kResp">—</div><div class="kpi-sub" id="kRespSub">—</div></div>
+    <div class="kpi k3"><div class="kpi-glow"></div>
+      <div class="kpi-ico">⚡</div><div class="kpi-lbl">AGEFRED ELE</div>
+      <div class="kpi-val" id="kEle">—</div><div class="kpi-sub" id="kEleSub">—</div></div>
+    <div class="kpi k4"><div class="kpi-glow"></div>
+      <div class="kpi-ico">❄️</div><div class="kpi-lbl">AGEFRED HVAC</div>
+      <div class="kpi-val" id="kHvac">—</div><div class="kpi-sub" id="kHvacSub">—</div></div>
+    <div class="kpi k5"><div class="kpi-glow"></div>
+      <div class="kpi-ico">🔁</div><div class="kpi-lbl">OLC</div>
+      <div class="kpi-val" id="kOlc">—</div><div class="kpi-sub" id="kOlcSub">—</div></div>
+  </div>
+
+  <!-- Charts Plan -->
+  <div class="cgrid" id="cgridPlan">
+    <div id="emptyState">
+      <div class="ei">📂</div>
+      <p>Carga tu archivo Excel (MP JUNIO o IW38) para visualizar el dashboard de mantenimiento.</p>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════════ -->
+<!--  PANEL: BACKLOG                                 -->
+<!-- ════════════════════════════════════════════════ -->
+<div class="panel" id="panelBacklog">
+
+  <!-- Filters Backlog -->
+  <div class="filters-box" id="filtersBacklog">
+    <div class="filters-title">🔽 Filtros Backlog</div>
+    <div class="fg"><label>Responsable</label>
+      <select id="bfPob"><option value="">Todos</option></select></div>
+    <div class="fg"><label>Tipo Calle</label>
+      <select id="bfCalle"><option value="">Todos</option></select></div>
+    <div class="fg"><label>Clase Orden</label>
+      <select id="bfClaseOrden"><option value="">Todas</option></select></div>
+    <button class="btn-reset" id="btnResetBacklog" style="align-self:flex-end">✕ Resetear</button>
+  </div>
+
+  <!-- KPIs Backlog -->
+  <div class="kpi-row">
+    <div class="kpi k1"><div class="kpi-glow"></div>
+      <div class="kpi-ico">⏳</div><div class="kpi-lbl">OTs Pendientes</div>
+      <div class="kpi-val" id="bkPend">—</div><div class="kpi-sub" id="bkPendSub">—</div></div>
+    <div class="kpi k3"><div class="kpi-glow"></div>
+      <div class="kpi-ico">✅</div><div class="kpi-lbl">Terminadas 12m</div>
+      <div class="kpi-val" id="bkTerm">—</div><div class="kpi-sub" id="bkTermSub">TC + TT</div></div>
+    <div class="kpi k4"><div class="kpi-glow"></div>
+      <div class="kpi-ico">📅</div><div class="kpi-lbl">Días Hábiles 12m</div>
+      <div class="kpi-val" id="bkDH">—</div><div class="kpi-sub">Lun–Vie</div></div>
+    <div class="kpi k5"><div class="kpi-glow"></div>
+      <div class="kpi-ico">⚙️</div><div class="kpi-lbl">Capacidad/Día</div>
+      <div class="kpi-val" id="bkCap">—</div><div class="kpi-sub" id="bkCapSub">OTs/día</div></div>
+    <div class="kpi k2"><div class="kpi-glow"></div>
+      <div class="kpi-ico">🔥</div><div class="kpi-lbl">Backlog Total</div>
+      <div class="kpi-val" id="bkTotal">—</div><div class="kpi-sub" id="bkTotalSub">días para limpiar</div></div>
+  </div>
+
+  <!-- Gauges por área -->
+  <div class="gauge-row" id="gaugeRow"></div>
+
+  <!-- Charts Backlog -->
+  <div class="cgrid" id="cgridBacklog">
+    <div id="emptyBacklog" style="grid-column:span 12;display:flex;flex-direction:column;align-items:center;
+      justify-content:center;gap:12px;padding:60px 20px;border:1px dashed var(--brd);
+      border-radius:var(--r);color:var(--mu);text-align:center">
+      <div style="font-size:40px;opacity:.4">⏳</div>
+      <p style="font-size:12px;max-width:320px;line-height:1.7">Carga el archivo IW38 con historial de 12 meses para calcular el backlog.</p>
+    </div>
+  </div>
+</div>
+
+</div><!-- /wrap -->
+<script>
+// ── Chart.js defaults ──────────────────────────────────────────────────────
+Chart.defaults.color='#5a6f8f';
+Chart.defaults.font.family="'DM Mono',monospace";
+Chart.defaults.font.size=11;
+Chart.defaults.plugins.legend.labels.boxWidth=10;
+Chart.defaults.plugins.legend.labels.padding=12;
+
+const PAL=['#ff6600','#fbbf24','#a78bfa','#34d399','#60a5fa','#f472b6','#fb923c','#e879f9','#a3e635','#00e5ff'];
+const TTP={backgroundColor:'#0e1525',borderColor:'#1e2d48',borderWidth:1,
+  titleColor:'#dde4f0',bodyColor:'#8094b4',padding:10,cornerRadius:8,displayColors:true};
+
+// ── State ──────────────────────────────────────────────────────────────────
+let allData=[], charts={}, activeTab='plan';
+const STATUS_TERM = ['TC','TT','TT   I2','CN','CN   PROD'];
+const DH_12M = 262; // días hábiles abr-2025 → abr-2026
+
+// ── Tab switch ─────────────────────────────────────────────────────────────
+function switchTab(tab) {
+  activeTab = tab;
+  document.querySelectorAll('.tab').forEach((t,i)=>{
+    t.classList.toggle('active', (i===0&&tab==='plan')||(i===1&&tab==='backlog'));
+  });
+  document.getElementById('panelPlan').classList.toggle('active', tab==='plan');
+  document.getElementById('panelBacklog').classList.toggle('active', tab==='backlog');
+}
+
+// ── Drag & drop ────────────────────────────────────────────────────────────
+const zone=document.getElementById('upZone');
+zone.addEventListener('dragover', e=>{e.preventDefault();zone.style.borderColor='#ffcc00';});
+zone.addEventListener('dragleave',()=>{zone.style.borderColor='';});
+zone.addEventListener('drop',e=>{e.preventDefault();zone.style.borderColor='';
+  const f=e.dataTransfer.files[0];if(f)loadFile(f);});
+document.getElementById('fileInput').addEventListener('change',e=>{
+  if(e.target.files[0]) loadFile(e.target.files[0]);});
+
+// ── Plan filters ───────────────────────────────────────────────────────────
+const PLAN_FILTERS=['fPob','fCalle','fClasePM','fClaseOrden','fSemana',
+                    'fOrden','fInicioDesde','fInicioHasta','fFinDesde','fFinHasta'];
+PLAN_FILTERS.forEach(id=>{
+  const el=document.getElementById(id);
+  if(el) el.addEventListener('input',()=>renderPlan(filteredPlan()));
+});
+document.getElementById('btnResetPlan').addEventListener('click',()=>{
+  PLAN_FILTERS.forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+  renderPlan(filteredPlan());
+});
+
+// ── Backlog filters ────────────────────────────────────────────────────────
+['bfPob','bfCalle','bfClaseOrden'].forEach(id=>{
+  document.getElementById(id).addEventListener('change',()=>renderBacklog(filteredBacklog()));
+});
+document.getElementById('btnResetBacklog').addEventListener('click',()=>{
+  ['bfPob','bfCalle','bfClaseOrden'].forEach(id=>document.getElementById(id).value='');
+  renderBacklog(filteredBacklog());
+});
+
+// ── Date helper → "YYYY-MM-DD" ─────────────────────────────────────────────
+function toYMD(val){
+  if(!val||val==='null') return null;
+  if(val instanceof Date){
+    if(isNaN(val)) return null;
+    return `${val.getFullYear()}-${String(val.getMonth()+1).padStart(2,'0')}-${String(val.getDate()).padStart(2,'0')}`;
+  }
+  if(typeof val==='string'&&val.match(/^\d{4}-\d{2}-\d{2}/)) return val.slice(0,10);
+  if(typeof val==='string'&&val.includes('/')){
+    const [d,m,y]=val.split('/');
+    if(y&&m&&d) return `${y}-${m.padStart(2,'0')}-${d.padStart(2,'0')}`;
+  }
+  return null;
+}
+
+// ── Normalize calle ────────────────────────────────────────────────────────
+function normCalle(c){
+  if(!c||c==='nan') return 'OTROS';
+  c=String(c).toUpperCase().trim();
+  if(c.includes('AGEFRED ELE')||c.includes('AEGFRED ELE')) return 'AGEFRED ELE';
+  if(c.includes('AGEFRED HVAC')||c.includes('AEGFRED HVAC')) return 'AGEFRED HVAC';
+  if(c.includes('OLC')) return 'OLC';
+  return c;
+}
+
+// ── Load file ──────────────────────────────────────────────────────────────
+function loadFile(file){
+  const msg=document.getElementById('upMsg');
+  msg.textContent=`⏳ Leyendo ${file.name}…`;msg.className='up-msg';
+  const reader=new FileReader();
+  reader.onerror=()=>{msg.textContent='❌ No se pudo leer.';msg.className='up-msg err';};
+  reader.onload=e=>{
+    try{
+      const isCsv=file.name.toLowerCase().endsWith('.csv');
+      const wb=isCsv
+        ?XLSX.read(e.target.result,{type:'binary',cellDates:true})
+        :XLSX.read(new Uint8Array(e.target.result),{type:'array',cellDates:true});
+      const sheetName=wb.SheetNames[0];
+      const raw=XLSX.utils.sheet_to_json(wb.Sheets[sheetName],{defval:null,raw:false});
+      if(!raw.length) throw new Error('Hoja vacía.');
+
+      allData=raw.map(row=>{
+        const n={};
+        Object.keys(row).forEach(k=>{n[k.trim()]=row[k];});
+        const col=(...cands)=>{
+          for(const c of cands){
+            const found=Object.keys(n).find(k=>k.toLowerCase().includes(c.toLowerCase()));
+            if(found!==undefined&&n[found]!==null&&n[found]!=='') return n[found];
+          }
+          return null;
+        };
+        n._pob        = col('Población','Poblacion');
+        n._calle      = normCalle(col('Calle'));
+        n._orden      = col('Orden');
+        n._clasePM    = col('Clase actividad PM');
+        n._claseOrden = col('Clase de orden');
+        n._status     = col('Status de usuario');
+        n._statusSys  = col('Status del sistema');
+        n._lista      = col('Lista');
+        n._ubicacion  = col('Denominación de la ubicación técnica');
+        n._textoBreve = col('Texto breve');
+        n._diaIni     = toYMD(col('Fecha de inicio extrema'));
+        n._diaFin     = toYMD(col('Fecha fin extrema'));
+        n._diaEnt     = toYMD(col('Fecha entrada'));
+        if(n._diaIni){
+          const d=new Date(n._diaIni);
+          const jan1=new Date(d.getFullYear(),0,1);
+          n._semana=String(Math.ceil(((d-jan1)/86400000+jan1.getDay()+1)/7));
+        }
+        // Terminada?
+        n._terminada=STATUS_TERM.includes(String(n._status||'').trim());
+        return n;
+      });
+
+      document.getElementById('bdgRows').textContent=`${allData.length} registros`;
+      document.getElementById('bdgSheet').textContent=sheetName;
+      document.getElementById('bdgTime').textContent=`Act. ${new Date().toLocaleTimeString('es-MX')}`;
+      msg.textContent=`✅ ${file.name} — ${allData.length} órdenes cargadas`;
+      msg.className='up-msg ok';
+
+      // Show filters
+      document.getElementById('filtersPlan').style.display='flex';
+      document.getElementById('filtersBacklog').style.display='flex';
+      buildPlanFilters(allData);
+      buildBacklogFilters(allData);
+      renderPlan(allData);
+      renderBacklog(allData);
+    } catch(err){
+      msg.textContent=`❌ Error: ${err.message}`;msg.className='up-msg err';
+      console.error(err);
+    }
+  };
+  if(file.name.toLowerCase().endsWith('.csv')) reader.readAsBinaryString(file);
+  else reader.readAsArrayBuffer(file);
+}
+
+// ── Filter helpers ─────────────────────────────────────────────────────────
+function fillSel(id,vals,fmt){
+  const s=document.getElementById(id);if(!s)return;
+  const first=s.options[0];s.innerHTML='';s.appendChild(first);
+  vals.forEach(v=>{const o=document.createElement('option');o.value=v;o.textContent=fmt?fmt(v):v;s.appendChild(o);});
+}
+function uniq(data,key){return[...new Set(data.map(r=>r[key]).filter(Boolean))].sort();}
+
+function buildPlanFilters(data){
+  fillSel('fPob',    uniq(data,'_pob'));
+  fillSel('fCalle',  uniq(data,'_calle'));
+  fillSel('fClasePM',uniq(data,'_clasePM'));
+  fillSel('fClaseOrden',uniq(data,'_claseOrden'));
+  fillSel('fSemana', uniq(data,'_semana').sort((a,b)=>+a-+b),v=>`Semana ${v}`);
+  const iniFechas=data.map(r=>r._diaIni).filter(Boolean).sort();
+  const finFechas=data.map(r=>r._diaFin).filter(Boolean).sort();
+  if(iniFechas.length){
+    ['fInicioDesde','fInicioHasta'].forEach(id=>{
+      const el=document.getElementById(id);
+      el.min=iniFechas[0];el.max=iniFechas[iniFechas.length-1];
+    });
+  }
+  if(finFechas.length){
+    ['fFinDesde','fFinHasta'].forEach(id=>{
+      const el=document.getElementById(id);
+      el.min=finFechas[0];el.max=finFechas[finFechas.length-1];
+    });
+  }
+}
+function buildBacklogFilters(data){
+  fillSel('bfPob',       uniq(data,'_pob'));
+  fillSel('bfCalle',     uniq(data,'_calle'));
+  fillSel('bfClaseOrden',uniq(data,'_claseOrden'));
+}
+
+function filteredPlan(){
+  const pob=v('fPob'),cal=v('fCalle'),cpm=v('fClasePM'),
+        co=v('fClaseOrden'),sem=v('fSemana'),ord=v('fOrden').trim(),
+        id=v('fInicioDesde'),ih=v('fInicioHasta'),fd=v('fFinDesde'),fh=v('fFinHasta');
+  return allData.filter(r=>{
+    if(pob&&r._pob!==pob) return false;
+    if(cal&&r._calle!==cal) return false;
+    if(cpm&&r._clasePM!==cpm) return false;
+    if(co&&r._claseOrden!==co) return false;
+    if(sem&&r._semana!==sem) return false;
+    if(ord&&!String(r._orden||'').includes(ord)) return false;
+    if(id&&r._diaIni&&r._diaIni<id) return false;
+    if(ih&&r._diaIni&&r._diaIni>ih) return false;
+    if(fd&&r._diaFin&&r._diaFin<fd) return false;
+    if(fh&&r._diaFin&&r._diaFin>fh) return false;
+    return true;
+  });
+}
+function filteredBacklog(){
+  const pob=v('bfPob'),cal=v('bfCalle'),co=v('bfClaseOrden');
+  return allData.filter(r=>{
+    if(pob&&r._pob!==pob) return false;
+    if(cal&&r._calle!==cal) return false;
+    if(co&&r._claseOrden!==co) return false;
+    return true;
+  });
+}
+function v(id){const el=document.getElementById(id);return el?el.value:'';}
+
+// ── Destroy chart ──────────────────────────────────────────────────────────
+function dc(id){if(charts[id]){charts[id].destroy();delete charts[id];}}
+function groupCount(data,key){
+  const m={};
+  data.forEach(r=>{const k=r[key]||'N/A';m[k]=(m[k]||0)+1;});
+  return m;
+}
+function sortedObj(obj,limit=20){
+  return Object.entries(obj).sort((a,b)=>b[1]-a[1]).slice(0,limit)
+    .reduce((acc,[k,vl])=>{acc.k.push(k);acc.v.push(vl);return acc;},{k:[],v:[]});
+}
+function pct(n,t){return t?((n/t)*100).toFixed(1)+'%':'0%';}
+
+// ══════════════════════════════════════════════════
+//  RENDER PLAN
+// ══════════════════════════════════════════════════
+function renderPlan(data){
+  const total=data.length;
+  // KPIs
+  document.getElementById('kTot').textContent=total;
+  document.getElementById('kTotSub').textContent=`${allData.length} total en archivo`;
+  const resps=new Set(data.map(r=>r._pob).filter(Boolean));
+  document.getElementById('kResp').textContent=resps.size;
+  document.getElementById('kRespSub').textContent=resps.size?[...resps].join(' · ').substring(0,45):'—';
+  const eleN=data.filter(r=>r._calle==='AGEFRED ELE').length;
+  const hvacN=data.filter(r=>r._calle==='AGEFRED HVAC').length;
+  const olcN=data.filter(r=>r._calle==='OLC').length;
+  document.getElementById('kEle').textContent=eleN;
+  document.getElementById('kEleSub').textContent=pct(eleN,total)+' del total';
+  document.getElementById('kHvac').textContent=hvacN;
+  document.getElementById('kHvacSub').textContent=pct(hvacN,total)+' del total';
+  document.getElementById('kOlc').textContent=olcN;
+  document.getElementById('kOlcSub').textContent=pct(olcN,total)+' del total';
+  document.getElementById('filterCount').textContent=
+    total<allData.length?`Mostrando ${total} de ${allData.length}`:'';
+
+  // Charts shell
+  document.getElementById('cgridPlan').innerHTML=`
+    <div class="cc s8"><div class="ch"><span class="ct">Órdenes por Responsable</span><span class="cb">BARRAS</span></div>
+      <div class="cw" style="height:270px"><canvas id="cpPobOrden"></canvas></div></div>
+    <div class="cc s4"><div class="ch"><span class="ct">Distribución Tipo Calle</span><span class="cb">DONA</span></div>
+      <div class="cw" style="height:270px"><canvas id="cpCalle"></canvas></div></div>
+    <div class="cc s4"><div class="ch"><span class="ct">Clase Actividad PM</span><span class="cb">DONA</span></div>
+      <div class="cw" style="height:250px"><canvas id="cpClasePM"></canvas></div></div>
+    <div class="cc s4"><div class="ch"><span class="ct">Clase de Orden</span><span class="cb">DONA</span></div>
+      <div class="cw" style="height:250px"><canvas id="cpClaseOrden"></canvas></div></div>
+    <div class="cc s4"><div class="ch"><span class="ct">Status de Usuario</span><span class="cb">DONA</span></div>
+      <div class="cw" style="height:250px"><canvas id="cpStatus"></canvas></div></div>
+    <div class="cc s12"><div class="ch"><span class="ct">Órdenes por Fecha de Inicio Extrema</span><span class="cb">LÍNEA</span></div>
+      <div class="cw" style="height:220px"><canvas id="cpTimeline"></canvas></div></div>
+    <div class="cc s6"><div class="ch"><span class="ct">Órdenes por Semana</span><span class="cb">BARRAS</span></div>
+      <div class="cw" style="height:230px"><canvas id="cpSemana"></canvas></div></div>
+    <div class="cc s6"><div class="ch"><span class="ct">Tipo Calle por Responsable</span><span class="cb">APILADAS</span></div>
+      <div class="cw" style="height:230px"><canvas id="cpCalleResp"></canvas></div></div>
+  `;
+
+  // 1. Barras responsable
+  dc('cpPobOrden');
+  const pobS=sortedObj(groupCount(data,'_pob'));
+  charts['cpPobOrden']=new Chart(document.getElementById('cpPobOrden'),{type:'bar',
+    data:{labels:pobS.k,datasets:[{label:'Órdenes',data:pobS.v,
+      backgroundColor:PAL.map(c=>c+'bb'),borderColor:PAL,borderWidth:1.5,borderRadius:6}]},
+    options:{responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{display:false},tooltip:{...TTP}},
+      scales:{x:{ticks:{color:'#5a6f8f',maxRotation:25},grid:{color:'#1a2640'}},
+              y:{ticks:{color:'#5a6f8f'},grid:{color:'#1a2640'},beginAtZero:true}}}});
+
+  // 2. Dona calle
+  dc('cpCalle');
+  const calleMap=groupCount(data,'_calle');
+  charts['cpCalle']=new Chart(document.getElementById('cpCalle'),{type:'doughnut',
+    data:{labels:Object.keys(calleMap),datasets:[{data:Object.values(calleMap),
+      backgroundColor:PAL.map(c=>c+'cc'),borderColor:'#0e1525',borderWidth:2,hoverOffset:8}]},
+    options:{responsive:true,maintainAspectRatio:false,cutout:'60%',
+      plugins:{legend:{position:'bottom',labels:{color:'#8094b4',padding:10}},
+        tooltip:{...TTP,callbacks:{label:ctx=>{const t=ctx.dataset.data.reduce((a,b)=>a+b,0);
+          return ` ${ctx.label}: ${ctx.parsed} (${((ctx.parsed/t)*100).toFixed(1)}%)`;
+        }}}}}});
+
+  // 3. Dona Clase PM
+  dc('cpClasePM');
+  const cpmMap=groupCount(data,'_clasePM');
+  charts['cpClasePM']=new Chart(document.getElementById('cpClasePM'),{type:'doughnut',
+    data:{labels:Object.keys(cpmMap),datasets:[{data:Object.values(cpmMap),
+      backgroundColor:[PAL[2]+'cc',PAL[4]+'cc',PAL[0]+'cc'],borderColor:'#0e1525',borderWidth:2,hoverOffset:8}]},
+    options:{responsive:true,maintainAspectRatio:false,cutout:'60%',
+      plugins:{legend:{position:'bottom',labels:{color:'#8094b4',padding:10}},
+        tooltip:{...TTP,callbacks:{label:ctx=>{const t=ctx.dataset.data.reduce((a,b)=>a+b,0);
+          return ` ${ctx.label}: ${ctx.parsed} (${((ctx.parsed/t)*100).toFixed(1)}%)`;
+        }}}}}});
+
+  // 4. Dona Clase Orden
+  dc('cpClaseOrden');
+  const coMap=groupCount(data,'_claseOrden');
+  charts['cpClaseOrden']=new Chart(document.getElementById('cpClaseOrden'),{type:'doughnut',
+    data:{labels:Object.keys(coMap),datasets:[{data:Object.values(coMap),
+      backgroundColor:PAL.map(c=>c+'cc'),borderColor:'#0e1525',borderWidth:2,hoverOffset:8}]},
+    options:{responsive:true,maintainAspectRatio:false,cutout:'60%',
+      plugins:{legend:{position:'bottom',labels:{color:'#8094b4',padding:10}},
+        tooltip:{...TTP,callbacks:{label:ctx=>{const t=ctx.dataset.data.reduce((a,b)=>a+b,0);
+          return ` ${ctx.label}: ${ctx.parsed} (${((ctx.parsed/t)*100).toFixed(1)}%)`;
+        }}}}}});
+
+  // 5. Dona Status
+  dc('cpStatus');
+  const stMap=groupCount(data,'_status');
+  charts['cpStatus']=new Chart(document.getElementById('cpStatus'),{type:'doughnut',
+    data:{labels:Object.keys(stMap),datasets:[{data:Object.values(stMap),
+      backgroundColor:PAL.map(c=>c+'cc'),borderColor:'#0e1525',borderWidth:2,hoverOffset:8}]},
+    options:{responsive:true,maintainAspectRatio:false,cutout:'60%',
+      plugins:{legend:{position:'bottom',labels:{color:'#8094b4',padding:10}},
+        tooltip:{...TTP,callbacks:{label:ctx=>{const t=ctx.dataset.data.reduce((a,b)=>a+b,0);
+          return ` ${ctx.label}: ${ctx.parsed} (${((ctx.parsed/t)*100).toFixed(1)}%)`;
+        }}}}}});
+
+  // 6. Línea temporal
+  dc('cpTimeline');
+  const diasMap={};
+  data.forEach(r=>{if(r._diaIni) diasMap[r._diaIni]=(diasMap[r._diaIni]||0)+1;});
+  const diasKeys=Object.keys(diasMap).sort();
+  charts['cpTimeline']=new Chart(document.getElementById('cpTimeline'),{type:'line',
+    data:{labels:diasKeys,datasets:[{label:'Órdenes',data:diasKeys.map(k=>diasMap[k]),
+      borderColor:PAL[0],backgroundColor:PAL[0]+'18',pointBackgroundColor:PAL[0],
+      tension:.35,fill:true,pointRadius:4}]},
+    options:{responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{display:false},tooltip:{...TTP}},
+      scales:{x:{ticks:{color:'#5a6f8f',maxRotation:30},grid:{color:'#1a2640'}},
+              y:{ticks:{color:'#5a6f8f'},grid:{color:'#1a2640'},beginAtZero:true}}}});
+
+  // 7. Semana
+  dc('cpSemana');
+  const semMap=groupCount(data,'_semana');
+  const semKeys=Object.keys(semMap).sort((a,b)=>+a-+b);
+  charts['cpSemana']=new Chart(document.getElementById('cpSemana'),{type:'bar',
+    data:{labels:semKeys.map(k=>`Sem ${k}`),datasets:[{label:'Órdenes',
+      data:semKeys.map(k=>semMap[k]),backgroundColor:PAL[3]+'bb',borderColor:PAL[3],
+      borderWidth:1.5,borderRadius:6}]},
+    options:{responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{display:false},tooltip:{...TTP}},
+      scales:{x:{ticks:{color:'#5a6f8f'},grid:{color:'#1a2640'}},
+              y:{ticks:{color:'#5a6f8f'},grid:{color:'#1a2640'},beginAtZero:true}}}});
+
+  // 8. Calle × Responsable apiladas
+  dc('cpCalleResp');
+  const callesU=[...new Set(data.map(r=>r._calle).filter(Boolean))];
+  const pobsU=[...new Set(data.map(r=>r._pob).filter(Boolean))].sort();
+  charts['cpCalleResp']=new Chart(document.getElementById('cpCalleResp'),{type:'bar',
+    data:{labels:pobsU,datasets:callesU.map((cal,i)=>({
+      label:cal,data:pobsU.map(p=>data.filter(r=>r._pob===p&&r._calle===cal).length),
+      backgroundColor:PAL[i%PAL.length]+'cc',borderColor:PAL[i%PAL.length],borderWidth:1,borderRadius:3
+    }))},
+    options:{responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{position:'top',labels:{color:'#8094b4'}},tooltip:{...TTP,mode:'index',intersect:false}},
+      scales:{x:{stacked:true,ticks:{color:'#5a6f8f',maxRotation:20},grid:{color:'#1a2640'}},
+              y:{stacked:true,ticks:{color:'#5a6f8f'},grid:{color:'#1a2640'},beginAtZero:true}}}});
+}
+
+// ══════════════════════════════════════════════════
+//  RENDER BACKLOG
+// ══════════════════════════════════════════════════
+function renderBacklog(data){
+  // Pendientes = NO terminadas (excluir TC, TT, TT I2, CN, CN PROD)
+  const pendientes = data.filter(r=>!r._terminada);
+  // Terminadas 12 meses: TC o TT, fecha entrada en últimos 12 meses
+  const hace12m = new Date(); hace12m.setFullYear(hace12m.getFullYear()-1);
+  const hace12mStr = toYMD(hace12m);
+  const terminadas12m = data.filter(r=>{
+    const st=String(r._status||'').trim();
+    return (st==='TC'||st==='TT'||st==='TT   I2') && r._diaEnt && r._diaEnt>=hace12mStr;
+  });
+
+  const cap = terminadas12m.length / DH_12M;
+  const backlogTotal = cap>0 ? (pendientes.length/cap) : 0;
+
+  // KPIs
+  document.getElementById('bkPend').textContent   = pendientes.length;
+  document.getElementById('bkPendSub').textContent= `de ${data.length} órdenes totales`;
+  document.getElementById('bkTerm').textContent   = terminadas12m.length;
+  document.getElementById('bkTermSub').textContent= 'últimos 12 meses';
+  document.getElementById('bkDH').textContent     = DH_12M;
+  document.getElementById('bkCap').textContent    = cap.toFixed(2);
+  document.getElementById('bkCapSub').textContent = `${terminadas12m.length} ÷ ${DH_12M} días`;
+  document.getElementById('bkTotal').textContent  = backlogTotal>0?backlogTotal.toFixed(0)+'d':'—';
+  document.getElementById('bkTotalSub').textContent= cap>0
+    ?`${pendientes.length} OTs ÷ ${cap.toFixed(2)} OTs/día`:'Sin terminadas registradas';
+
+  // Badge header
+  const bdg=document.getElementById('bdgBacklog');
+  bdg.style.display='flex';
+  bdg.textContent=`Backlog: ${backlogTotal.toFixed(0)} días`;
+
+  // ── Gauges por área ───────────────────────────────────────────────────────
+  const AREAS=['AGEFRED ELE','AGEFRED HVAC','OLC'];
+  const COLORS=[PAL[0],PAL[4],PAL[2]];
+  const gaugeRow=document.getElementById('gaugeRow');
+  gaugeRow.innerHTML='';
+
+  // También gauge por responsable
+  const RESPS=[...new Set(data.map(r=>r._pob).filter(Boolean))].sort();
+
+  [...AREAS,...RESPS].forEach((area,idx)=>{
+    const isArea=idx<AREAS.length;
+    const key=isArea?'_calle':'_pob';
+    const pend=pendientes.filter(r=>r[key]===area).length;
+    const term=terminadas12m.filter(r=>r[key]===area).length;
+    const capA=term/DH_12M;
+    const blA=capA>0?(pend/capA):0;
+    const color=isArea?COLORS[idx]:PAL[(idx-AREAS.length)%PAL.length];
+    const maxBl=150; // referencia escala
+    const pctGauge=Math.min(blA/maxBl,1);
+    const gId=`gauge_${area.replace(/\s/g,'_')}`;
+
+    const card=document.createElement('div');
+    card.className='gauge-card';
+    card.innerHTML=`
+      <div class="gauge-label">${area}</div>
+      <div class="gauge-wrap">
+        <canvas id="${gId}" width="160" height="110"></canvas>
+        <div class="gauge-center">
+          <div class="gauge-val" style="color:${color}">${blA>0?blA.toFixed(0):'—'}</div>
+          <div class="gauge-unit">días backlog</div>
+        </div>
+      </div>
+      <div class="gauge-sub">Pend: ${pend} · Term12m: ${term} · Cap: ${capA.toFixed(2)}/día</div>
+    `;
+    gaugeRow.appendChild(card);
+
+    // Draw half-donut gauge
+    requestAnimationFrame(()=>{
+      const canvas=document.getElementById(gId);
+      if(!canvas) return;
+      const ctx2=canvas.getContext('2d');
+      const cx=80,cy=85,r=60,start=Math.PI,end=2*Math.PI;
+      // bg arc
+      ctx2.beginPath();ctx2.arc(cx,cy,r,start,end);
+      ctx2.lineWidth=14;ctx2.strokeStyle='#1a2640';ctx2.lineCap='round';ctx2.stroke();
+      // value arc
+      if(blA>0){
+        ctx2.beginPath();ctx2.arc(cx,cy,r,start,start+Math.PI*pctGauge);
+        ctx2.lineWidth=14;ctx2.strokeStyle=color;ctx2.lineCap='round';ctx2.stroke();
+      }
+    });
+  });
+
+  // ── Charts Backlog ────────────────────────────────────────────────────────
+  document.getElementById('cgridBacklog').innerHTML=`
+    <div class="cc s6"><div class="ch"><span class="ct">Backlog (días) por Responsable</span><span class="cb">BARRAS H</span></div>
+      <div class="cw" style="height:280px"><canvas id="cbResp"></canvas></div></div>
+    <div class="cc s6"><div class="ch"><span class="ct">Backlog (días) por Área / Calle</span><span class="cb">BARRAS H</span></div>
+      <div class="cw" style="height:280px"><canvas id="cbArea"></canvas></div></div>
+    <div class="cc s6"><div class="ch"><span class="ct">OTs Pendientes por Responsable</span><span class="cb">BARRAS</span></div>
+      <div class="cw" style="height:260px"><canvas id="cbPendResp"></canvas></div></div>
+    <div class="cc s6"><div class="ch"><span class="ct">Terminadas últimos 12m por Mes</span><span class="cb">LÍNEA</span></div>
+      <div class="cw" style="height:260px"><canvas id="cbTermMes"></canvas></div></div>
+    <div class="cc s12"><div class="ch"><span class="ct">Pendientes vs Terminadas 12m — Comparativa por Responsable</span><span class="cb">AGRUPADAS</span></div>
+      <div class="cw" style="height:240px"><canvas id="cbCompara"></canvas></div></div>
+    <div class="cc s12"><div class="ch"><span class="ct">Detalle Backlog por Responsable</span><span class="cb">TABLA</span></div>
+      <div id="tablaBacklog" style="overflow-x:auto;margin-top:4px"></div></div>
+  `;
+
+  // 1. Backlog días por responsable (barras H)
+  dc('cbResp');
+  const respBL=RESPS.map(p=>{
+    const pend=pendientes.filter(r=>r._pob===p).length;
+    const term=terminadas12m.filter(r=>r._pob===p).length;
+    const capR=term/DH_12M;
+    return{name:p,bl:capR>0?+(pend/capR).toFixed(1):0,pend,term,capR:+capR.toFixed(2)};
+  }).filter(r=>r.pend>0).sort((a,b)=>b.bl-a.bl);
+
+  charts['cbResp']=new Chart(document.getElementById('cbResp'),{type:'bar',
+    data:{labels:respBL.map(r=>r.name),datasets:[{label:'Días Backlog',
+      data:respBL.map(r=>r.bl),
+      backgroundColor:respBL.map(r=>r.bl>60?PAL[1]+'cc':r.bl>30?PAL[3]+'cc':PAL[5]+'cc'),
+      borderColor:respBL.map(r=>r.bl>60?PAL[1]:r.bl>30?PAL[3]:PAL[5]),
+      borderWidth:1.5,borderRadius:4}]},
+    options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{display:false},tooltip:{...TTP,callbacks:{label:ctx=>
+        ` ${ctx.parsed.x.toFixed(1)} días — Pend: ${respBL[ctx.dataIndex].pend}, Term12m: ${respBL[ctx.dataIndex].term}`}}},
+      scales:{x:{ticks:{color:'#5a6f8f'},grid:{color:'#1a2640'},beginAtZero:true},
+              y:{ticks:{color:'#8094b4'},grid:{color:'transparent'}}}}});
+
+  // 2. Backlog días por área
+  dc('cbArea');
+  const areaBL=AREAS.map((a,i)=>{
+    const pend=pendientes.filter(r=>r._calle===a).length;
+    const term=terminadas12m.filter(r=>r._calle===a).length;
+    const capA=term/DH_12M;
+    return{name:a,bl:capA>0?+(pend/capA).toFixed(1):0,pend,term,color:COLORS[i]};
+  }).sort((a,b)=>b.bl-a.bl);
+
+  charts['cbArea']=new Chart(document.getElementById('cbArea'),{type:'bar',
+    data:{labels:areaBL.map(r=>r.name),datasets:[{label:'Días Backlog',
+      data:areaBL.map(r=>r.bl),
+      backgroundColor:areaBL.map(r=>r.color+'bb'),
+      borderColor:areaBL.map(r=>r.color),
+      borderWidth:1.5,borderRadius:4}]},
+    options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{display:false},tooltip:{...TTP,callbacks:{label:ctx=>
+        ` ${ctx.parsed.x.toFixed(1)} días — Pend: ${areaBL[ctx.dataIndex].pend}, Term12m: ${areaBL[ctx.dataIndex].term}`}}},
+      scales:{x:{ticks:{color:'#5a6f8f'},grid:{color:'#1a2640'},beginAtZero:true},
+              y:{ticks:{color:'#8094b4'},grid:{color:'transparent'}}}}});
+
+  // 3. OTs Pendientes por responsable
+  dc('cbPendResp');
+  const pendResp=sortedObj(groupCount(pendientes,'_pob'));
+  charts['cbPendResp']=new Chart(document.getElementById('cbPendResp'),{type:'bar',
+    data:{labels:pendResp.k,datasets:[{label:'OTs Pendientes',data:pendResp.v,
+      backgroundColor:PAL.map(c=>c+'bb'),borderColor:PAL,borderWidth:1.5,borderRadius:6}]},
+    options:{responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{display:false},tooltip:{...TTP}},
+      scales:{x:{ticks:{color:'#5a6f8f',maxRotation:20},grid:{color:'#1a2640'}},
+              y:{ticks:{color:'#5a6f8f'},grid:{color:'#1a2640'},beginAtZero:true}}}});
+
+  // 4. Terminadas por mes (línea)
+  dc('cbTermMes');
+  const mesMapa={};
+  terminadas12m.forEach(r=>{
+    if(r._diaEnt){const m=r._diaEnt.slice(0,7);mesMapa[m]=(mesMapa[m]||0)+1;}
+  });
+  const mesKeys=Object.keys(mesMapa).sort();
+  charts['cbTermMes']=new Chart(document.getElementById('cbTermMes'),{type:'line',
+    data:{labels:mesKeys,datasets:[{label:'Terminadas',data:mesKeys.map(k=>mesMapa[k]),
+      borderColor:PAL[3],backgroundColor:PAL[3]+'18',pointBackgroundColor:PAL[3],
+      tension:.35,fill:true,pointRadius:5}]},
+    options:{responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{display:false},tooltip:{...TTP}},
+      scales:{x:{ticks:{color:'#5a6f8f',maxRotation:30},grid:{color:'#1a2640'}},
+              y:{ticks:{color:'#5a6f8f'},grid:{color:'#1a2640'},beginAtZero:true}}}});
+
+  // 5. Comparativa Pendientes vs Terminadas
+  dc('cbCompara');
+  const compLabels=RESPS;
+  const compPend=compLabels.map(p=>pendientes.filter(r=>r._pob===p).length);
+  const compTerm=compLabels.map(p=>terminadas12m.filter(r=>r._pob===p).length);
+  charts['cbCompara']=new Chart(document.getElementById('cbCompara'),{type:'bar',
+    data:{labels:compLabels,datasets:[
+      {label:'Pendientes',data:compPend,backgroundColor:PAL[1]+'bb',borderColor:PAL[1],borderWidth:1.5,borderRadius:4},
+      {label:'Terminadas 12m',data:compTerm,backgroundColor:PAL[3]+'bb',borderColor:PAL[3],borderWidth:1.5,borderRadius:4}
+    ]},
+    options:{responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{position:'top',labels:{color:'#8094b4'}},tooltip:{...TTP,mode:'index',intersect:false}},
+      scales:{x:{ticks:{color:'#5a6f8f',maxRotation:20},grid:{color:'#1a2640'}},
+              y:{ticks:{color:'#5a6f8f'},grid:{color:'#1a2640'},beginAtZero:true}}}});
+
+  // 6. Tabla detalle backlog
+  const tablaData=respBL;
+  let html=`<table class="bl-table"><thead><tr>
+    <th>Responsable</th><th>OTs Pendientes</th><th>Term. 12m (TC+TT)</th>
+    <th>Cap./Día</th><th>Backlog (días)</th><th>Nivel</th><th>Progreso</th>
+  </tr></thead><tbody>`;
+  const maxBl=Math.max(...tablaData.map(r=>r.bl),1);
+  tablaData.forEach(r=>{
+    const nivel=r.bl>60?'🔴 ALTO':r.bl>30?'🟡 MEDIO':'🟢 BAJO';
+    const cls=r.bl>60?'alto':r.bl>30?'medio':'bajo';
+    const barW=Math.round((r.bl/maxBl)*120);
+    html+=`<tr>
+      <td>${r.name}</td>
+      <td style="text-align:center">${r.pend}</td>
+      <td style="text-align:center">${r.term}</td>
+      <td style="text-align:center">${r.capR}</td>
+      <td style="text-align:center"><span class="bl-dias ${cls}">${r.bl} d</span></td>
+      <td style="text-align:center">${nivel}</td>
+      <td><span class="bl-bar" style="width:${barW}px;background:${r.bl>60?PAL[1]:r.bl>30?PAL[3]:PAL[5]}"></span></td>
+    </tr>`;
+  });
+  // Total
+  html+=`<tr style="background:var(--s2);font-weight:700">
+    <td>TOTAL</td>
+    <td style="text-align:center;color:var(--c1)">${pendientes.length}</td>
+    <td style="text-align:center;color:var(--c4)">${terminadas12m.length}</td>
+    <td style="text-align:center;color:var(--mu2)">${cap.toFixed(2)}</td>
+    <td style="text-align:center;color:var(--c2)">${backlogTotal.toFixed(0)} d</td>
+    <td colspan="2"></td>
+  </tr>`;
+  html+=`</tbody></table>`;
+  document.getElementById('tablaBacklog').innerHTML=html;
+}
+</script>
+</body>
+</html>
