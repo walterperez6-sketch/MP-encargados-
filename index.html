@@ -242,6 +242,14 @@ input[type="text"]:focus{
 </div>
   <button class="btn-reset" id="btnReset">✕ Resetear filtros</button>
 </div>
+  <div class="fg">
+  <label>Fecha inicio desde</label>
+  <input type="date" id="fFechaDesde">
+</div>
+<div class="fg">
+  <label>Fecha inicio hasta</label>
+  <input type="date" id="fFechaHasta">
+</div>
 
 <!-- KPIs -->
 <div class="kpi-row">
@@ -324,7 +332,6 @@ document.getElementById('btnReset').addEventListener('click', () => {
   );
   render(filtered());
 });
-
 function filtered() {
   const pob   = document.getElementById('fPob').value;
   const cal   = document.getElementById('fCalle').value;
@@ -333,19 +340,29 @@ function filtered() {
   const sem   = document.getElementById('fSemana').value;
   const orden = document.getElementById('fOrden').value.trim();
 
+  const fDesde = document.getElementById('fFechaDesde')?.value;
+  const fHasta = document.getElementById('fFechaHasta')?.value;
+
   return allData.filter(r => {
+
     if (pob && r._pob !== pob) return false;
     if (cal && r._calle !== cal) return false;
     if (cpm && r._clasePM !== cpm) return false;
     if (lst && r._lista !== lst) return false;
     if (sem && r._semana !== sem) return false;
 
-    if (orden && !String(r._orden || '').includes(orden))
-      return false;
+    if (orden && !String(r._orden || '').includes(orden)) return false;
+
+    // ── FILTRO POR FECHA ──
+    if (r._dia) {
+      if (fDesde && r._dia < fDesde) return false;
+      if (fHasta && r._dia > fHasta) return false;
+    }
 
     return true;
   });
 }
+
 
 function fillSel(id, vals, fmt) {
   const s = document.getElementById(id);
