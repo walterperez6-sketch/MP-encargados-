@@ -7,7 +7,20 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=DM+Mono:ital,wght@0,400;0,500;1,400&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet" />
-<style>
+  .watermark{
+  position:fixed;
+  bottom:20px;
+  right:20px;
+  font-family:'Syne',sans-serif;
+  font-size:12px;
+  letter-spacing:1px;
+  color:rgba(255,255,255,0.12);
+  pointer-events:none;
+  user-select:none;
+  z-index:0;
+}
+  <style>
+    
 :root{
   --bg:#080d18;--s1:#0e1525;--s2:#141f33;--s3:#1a2640;
   --brd:#1e2d48;--brd2:#253550;
@@ -175,7 +188,13 @@ input[type="text"]:focus{
 </style>
 </head>
 <body>
+
+<div class="watermark">
+  Developed by Walter Pérez Dávila
+</div>
+
 <div class="wrap">
+  
 
 <!-- HEADER -->
 <header>
