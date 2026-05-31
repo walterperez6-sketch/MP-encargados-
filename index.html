@@ -406,6 +406,28 @@ function load(file) {
           }
           return null;
         };
+        
+n._fechaEntrada = col(['Fecha de entrada']);
+
+let d = new Date(n._fechaEntrada);
+
+if (isNaN(d)) {
+  const s = String(n._fechaEntrada);
+  const parts = s.includes('/') ? s.split('/') : s.split('-');
+
+  if (parts.length === 3) {
+    d = new Date(`${parts[2]}-${parts[1]}-${parts[0]}`);
+  }
+}
+
+if (!isNaN(d)) {
+  const pad = (n) => String(n).padStart(2,'0');
+
+  n._dia = `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+
+  const jan1 = new Date(d.getFullYear(),0,1);
+  n._semana = String(Math.ceil(((d-jan1)/86400000 + jan1.getDay()+1)/7));
+}
         n._pob     = col(['Población','Poblacion','poblacion']);
         n._calle   = col(['Calle']);
         n._orden   = col(['Orden']);
@@ -416,7 +438,7 @@ function load(file) {
         n._claseOrden = col(['Clase de orden']);
         n._ubicacion  = col(['Denominación de la ubicación','ubicación técnica']);
         // Date → week
-        const fechaIni = col(['Fecha de inicio extrema','inicio extrema']);
+       const fechaIni = col(['Fecha de entrada']);
         if (fechaIni) {
           const d = new Date(fechaIni);
           if (!isNaN(d)) {
