@@ -473,17 +473,40 @@ document.getElementById('btnResetBacklog').addEventListener('click',()=>{
 // ── Date helper → "YYYY-MM-DD" ─────────────────────────────────────────────
 function toYMD(val){
   if(!val||val==='null') return null;
+  let fechaLimpia = null;
+  
   if(val instanceof Date){
-    if(isNaN(val)) return null;
-    return `${val.getFullYear()}-${String(val.getMonth()+1).padStart(2,'0')}-${String(val.getDate()).padStart(2,'0')}`;
-  }
-  if(typeof val==='string'&&val.match(/^\d{4}-\d{2}-\d{2}/)) return val.slice(0,10);
-  if(typeof val==='string'&&val.includes('/')){
+    if(!isNaN(val)) {
+      fechaLimpia = `${val.getFullYear()}-${String(val.getMonth()+1).padStart(2,'0')}-${String(val.getDate()).padStart(2,'0')}`;
+    }
+  } else if(typeof val==='string'&&val.match(/^\d{4}-\d{2}-\d{2}/)) {
+    fechaLimpia = val.slice(0,10);
+  } else if(typeof val==='string'&&val.includes('/')){
     const [d,m,y]=val.split('/');
-    if(y&&m&&d) return `${y}-${m.padStart(2,'0')}-${d.padStart(2,'0')}`;
+    if(y&&m&&d) fechaLimpia = `${y}-${m.padStart(2,'0')}-${d.padStart(2,'0')}`;
   }
-  return null;
+
+  return fechaLimpia;
 }
+
+// ── DETECTOR AUTOMÁTICO PARA TUS CALENDARIOS ────────────────────────────────
+// Este bloque hace magia: escucha cuando cambias las fechas y refresca el dashboard
+document.addEventListener('DOMContentLoaded', () => {
+  const desdeInput = document.getElementById('inicio-extrema-desde');
+  const hastaInput = document.getElementById('inicio-extrema-hasta');
+
+  if(desdeInput && hastaInput) {
+    const actualizarPorFecha = () => {
+      // Forzamos al dashboard a recalcular usando los eventos que ya tienes programados
+      const evento = new Event('change');
+      const filtroResponsable = document.querySelector('select'); // Busca tu primer filtro para activar la cadena
+      if(filtroResponsable) filtroResponsable.dispatchEvent(evento);
+    };
+
+    desdeInput.addEventListener('change', actualizarPorFecha);
+    hastaInput.addEventListener('change', actualizarPorFecha);
+  }
+});
 
 // ── Normalize calle ────────────────────────────────────────────────────────
 function normCalle(c){
